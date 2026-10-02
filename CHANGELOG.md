@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0
+- Hands with four fingers and a thumb that curl per gesture: relaxed at rest, fists when angry, an extended index finger for Point, flat palms for Namaste and Clap, open for Wave and Cheer, loose while talking, tighter while running
+- New walk and run cycle: heel strike and toe-off, knee absorb on contact, hip twist and drop, chest counter-twist, arm swing with elbow follow-through, steadied head, hair and tail swing
+- Lip-sync reads vowel shape: rounded lips on "oo/oh" sounds, wider mouth on bright sounds, brows lift and the head dips on stressed syllables
+- Saris, kurtas, daura, dhotis and skirts are skinned to the legs: hems lift and swing with each step instead of the knees poking through; the sari border follows the hem
+
 ## 0.7.0
 - Characters rebuilt on skinned bodies: torso, arms, legs and neck are one continuous skin with weighted joints, so shoulders, elbows, hips and knees bend smoothly instead of showing ball joints; fur follows the skinned limbs
 - Hands with a thumb (paws for animals), shoes with soles and toe caps, trouser cuffs, sleeve cuffs, collars, belts, shirt buttons, a kurta placket with gold buttons

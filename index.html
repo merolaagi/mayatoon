@@ -645,8 +645,8 @@ dialog::backdrop{background:rgba(5,6,8,.55);backdrop-filter:blur(4px)}
 <script>
 (function(){
 'use strict';
-const APP_VERSION = '0.7.0';
-const BUILD_ID = '20261002-052521-0038';
+const APP_VERSION = '0.8.0';
+const BUILD_ID = '20261002-053504-6241';
 const $ = s => document.querySelector(s);
 const DEG = Math.PI/180;
 
@@ -2076,6 +2076,7 @@ const _c2 = new THREE.Color();
 
 function buildCharacter(o){
   if(o.rig){ o.mesh.remove(o.rig.mover); disposeMesh(o.rig.mover); }
+  o._hands = null;
   const c = o.char, sp = SPECIES[c.species] || SPECIES.human, human = c.species === 'human';
   const furLen = (sp.furLen || 0)*(c.furLen ?? 1);
   const limbHex = sp.limbs || c.fur;
@@ -2135,8 +2136,16 @@ function buildCharacter(o){
     furry(skinPiece(fg, foreM, limbW('el'+s, 'sh'+s, null, .61, .45)), .8);
     part(new THREE.TorusGeometry(.051, .01, 8, 26), clothMat(shade(c.top, .85)), J['el'+s], 0, .005, 0).rotation.x = Math.PI/2;
     const hand = new THREE.Group(); hand.position.set(0, -.19, .004); J['el'+s].add(hand);
-    furry(part(sph(.05, 24, 16), handM, hand, 0, 0, 0, 1, 1.12, .74), .6);
-    if(human){ const th = part(centeredCapsule(.017, .028, 10), handM, hand, -.034*sx, .012, .026); th.rotation.set(-.35, 0, .65*sx); }
+    if(human){
+      part(sph(.045, 24, 16), handM, hand, 0, .008, 0, .62, 1.0, 1.08);
+      const H = {f:[], t:null, sx};
+      [[.026, .036], [.009, .041], [-.008, .039], [-.024, .031]].forEach(([fz, len], k) => {
+        const g = new THREE.Group(); g.position.set(0, -.03, fz); g.rotation.x = (k - 1.5)*.06; hand.add(g);
+        const gg = centeredCapsule(.0102, len, 10); gg.translate(0, -(len/2 + .0102), 0); part(gg, handM, g); H.f.push(g); });
+      const tg = new THREE.Group(); tg.position.set(-.012*sx, .002, .034); hand.add(tg);
+      const tgeo = centeredCapsule(.0118, .03, 10); tgeo.translate(0, -(.015 + .0118), 0); part(tgeo, handM, tg); H.t = tg;
+      (o._hands ||= {})[s] = H;
+    } else furry(part(sph(.05, 24, 16), handM, hand, 0, 0, 0, 1, 1.12, .74), .6);
   }
   { const geo = new THREE.CylinderGeometry(.06, .068, .1, 22, 4); geo.translate(0, .855, 0); furry(skinPiece(geo, fur, v => { const h = sm(.86, .9, v.y); return [['neck', 1 - h], ['head', h]]; }), .8); }
   if(!['sari'].includes(c.style)) part(new THREE.TorusGeometry(.078, .017, 10, 34), clothMat(shade(c.top, .86)), chest, 0, .075, -.004, 1.1, .86, 1).rotation.x = Math.PI/2;
@@ -2144,9 +2153,11 @@ function buildCharacter(o){
   if(['pants','shorts','skirt'].includes(c.style) && human){ [.68, .6].forEach(y => part(sph(.009, 10, 8), STD(shade(c.top, .6), .4), chest, 0, y - .76, front(y), 1, 1, .5)); }
   if(['pants','shorts'].includes(c.style)) part(new THREE.TorusGeometry(.168, .013, 8, 40), clothMat(shade(c.bottom, .58), .6), hips, 0, .035, 0, 1.12, .86, 1).rotation.x = Math.PI/2;
   if(c.style === 'kurta'){ part(new THREE.BoxGeometry(.028, .13, .006), clothMat(shade(c.top, .8)), chest, 0, -.04, front(.72) - .001); [-.0, -.04, -.08].forEach(y => part(sph(.007, 10, 8), STD('#d4af37', .3, .6), chest, 0, y, front(.72) + .003)); }
-  if(c.style === 'skirt'){ const sk = part(new THREE.CylinderGeometry(.16, .27, .25, 40, 3, true), clothMat(c.bottom), hips, 0, -.075, 0); sk.material.side = THREE.DoubleSide; }
-  const garment = (rt, rb, h, y, hex) => { const g = part(new THREE.CylinderGeometry(rt, rb, h, 40, 4, true), clothMat(hex), hips, 0, y, 0, 1.08, 1, .92); g.material.side = THREE.DoubleSide; return g; };
-  if(c.style === 'sari'){ garment(.165, .25, .5, -.2, c.bottom); part(new THREE.TorusGeometry(.25, .012, 8, 48), clothMat(shade(c.bottom, .62)), hips, 0, -.445, 0, 1.08, .92, 1).rotation.x = Math.PI/2;
+  const clothW = yTop => v => { const t = clamp((yTop - v.y)/.42), k = sm(.06, .7, t)*.88, fL = sm(-.07, .07, v.x); return [['hips', 1 - k], ['thL', k*fL], ['thR', k*(1 - fL)]]; };
+  const skinned = (rt, rb, h, y, hex, yTop) => { const geo = new THREE.CylinderGeometry(rt, rb, h, 44, 12, true); geo.scale(1.08, 1, .92); geo.translate(0, L + y, 0); const m = clothMat(hex); m.side = THREE.DoubleSide; return skinPiece(geo, m, clothW(yTop ?? (L + y + h/2))); };
+  if(c.style === 'skirt') skinned(.16, .27, .25, -.075, c.bottom);
+  const garment = (rt, rb, h, y, hex) => skinned(rt, rb, h, y, hex);
+  if(c.style === 'sari'){ garment(.165, .25, .5, -.2, c.bottom); skinned(.249, .253, .035, -.43, shade(c.bottom, .62), L + .05);
     const band = part(centeredCapsule(.03, .3, 12), clothMat(c.bottom), spine, .025, .2, .147, 1.35, 1, .22); band.rotation.z = -.62; band.rotation.x = -.08; band.castShadow = false;
     part(centeredCapsule(.034, .26, 12), clothMat(c.bottom), spine, .12, .22, -.14, 1.4, 1, .22).castShadow = false; }
   if(c.style === 'kurta') garment(.172, .21, .27, -.1, c.top);
@@ -2340,13 +2351,13 @@ function buildCharacter(o){
     case 'puff': furry(part(sph(.06), STD('#ffffff', .9), tail, 0, 0, -.02), 1.6); break;
     case 'curl': { const t = part(new THREE.TorusGeometry(.04, .012, 8, 16, Math.PI*1.6), fur, tail, 0, .03, -.03); t.rotation.y = Math.PI/2; break; }
   }
-  o.rig = {mover, root, J, face};
+  o.rig = {mover, root, J, face, hands:o._hands || null}; delete o._hands;
 }
 
 /* ----- poses & actions ----- */
 const ZERO = [0,0,0];
 const REST = {shL:[0,0,.1], shR:[0,0,-.1], elL:[-.12,0,0], elR:[-.12,0,0]};
-const FACE0 = {blink:0, open:0, smile:.25, brow:0, up:0, wide:.3};
+const FACE0 = {blink:0, open:0, smile:.25, brow:0, up:0, wide:.3, round:0};
 const EXPR = {neutral:{}, happy:{smile:1, up:.2}, sad:{smile:-.8, brow:.9}, angry:{smile:-.45, brow:-1}, surprised:{open:.75, up:1, smile:0}};
 function mergePose(...ps){ const out = {face:{}}; for(const p of ps){ if(!p) continue; for(const k in p){ if(k === 'face') Object.assign(out.face, p.face); else out[k] = p[k]; } } return out; }
 function blendPose(A, B, w){
@@ -2354,7 +2365,7 @@ function blendPose(A, B, w){
   const keys = new Set([...Object.keys(A), ...Object.keys(B)]); keys.delete('face');
   for(const k of keys){
     const a = A[k], b = B[k];
-    if(typeof a === 'number' || typeof b === 'number') out[k] = k === 'squash' ? lerp(a ?? 1, b ?? 1, w) : lerp(a || 0, b || 0, w);
+    if(typeof a === 'number' || typeof b === 'number') out[k] = k === 'squash' ? lerp(a ?? 1, b ?? 1, w) : k.startsWith('hand') ? lerp(a ?? .35, b ?? .35, w) : lerp(a || 0, b || 0, w);
     else { const x = a || ZERO, y = b || ZERO; out[k] = [lerp(x[0], y[0], w), lerp(x[1], y[1], w), lerp(x[2], y[2], w)]; }
   }
   const fa = Object.assign({}, FACE0, A.face), fb = Object.assign({}, FACE0, B.face);
@@ -2362,13 +2373,23 @@ function blendPose(A, B, w){
   return out;
 }
 function gait(ph, run){
-  const s = sin(ph), c = cos(ph), th = (run ? .8 : .5)*s, kb = run ? 1.25 : .85;
-  const kl = Math.max(0, c)*kb + (run ? .25 : .05), kr = Math.max(0, -c)*kb + (run ? .25 : .05);
+  const s1 = sin(ph), c1 = cos(ph), amp = run ? .82 : .5;
+  const swL = Math.max(0, c1), swR = Math.max(0, -c1), kb = run ? 1.4 : .95, base = run ? .28 : .06;
+  const thL = -amp*s1, thR = amp*s1;
+  const knL = kb*Math.pow(swL, 1.25) + base + .1*Math.max(0, s1)*(1 - swL), knR = kb*Math.pow(swR, 1.25) + base + .1*Math.max(0, -s1)*(1 - swR);
+  const heelL = -.24*Math.max(0, s1)*(1 - swL), heelR = -.24*Math.max(0, -s1)*(1 - swR);
+  const toeL = .42*Math.max(0, -s1)*Math.max(0, c1*1.4), toeR = .42*Math.max(0, s1)*Math.max(0, -c1*1.4);
+  const twist = (run ? .16 : .12)*s1, drop = (run ? .03 : .05)*c1;
+  const arm = (run ? .95 : .62)*amp;
   return {
-    thL:[-th,0,0], thR:[th,0,0], knL:[kl,0,0], knR:[kr,0,0], anL:[-(-th+kl)*.6,0,0], anR:[-(th+kr)*.6,0,0],
-    shL:[th*.9,0,.1], shR:[-th*.9,0,-.1], elL:[run ? -1.3 : -.25,0,0], elR:[run ? -1.3 : -.25,0,0],
-    spine:[run ? .22 : .04,0,0], hips:[0,.12*s,0], chest:[0,-.18*s,0], head:[run ? -.12 : 0,.1*s,0],
-    rootY:(run ? .05 : .02)*abs(c) - (run ? .04 : .01), tail:[0,.4*s,0]
+    thL:[thL, 0, .02], thR:[thR, 0, -.02], knL:[knL, 0, 0], knR:[knR, 0, 0],
+    anL:[-(thL + knL)*.55 + heelL + toeL, 0, 0], anR:[-(thR + knR)*.55 + heelR + toeR, 0, 0],
+    hips:[0, -twist, drop], spine:[run ? .2 : .05, twist*.4, -drop*.6], chest:[run ? .05 : .015, twist*1.25, -drop*.5],
+    shL:[arm*s1, 0, .12], shR:[-arm*s1, 0, -.12],
+    elL:[run ? -1.35 : -.28 - .3*Math.max(0, -s1), 0, 0], elR:[run ? -1.35 : -.28 - .3*Math.max(0, s1), 0, 0],
+    neck:[0, -twist*.5, 0], head:[run ? -.14 : -.02 + .025*abs(c1), -twist*.55, drop*.4],
+    rootY:(run ? .06 : .026)*(abs(c1) - .5) - (run ? .03 : .006), tail:[.15*abs(s1), .45*s1, 0], hair:[.08*abs(c1), .12*s1, 0],
+    handL:run ? .75 : .3, handR:run ? .75 : .3
   };
 }
 const ramp = u => smooth(u*5)*smooth((1-u)*5);
@@ -2377,8 +2398,8 @@ const ACTIONS = {
     return {hips:[0,.04*w,.035*w], spine:[0,0,-.03*w], chest:[.02*sin(t*1.7),0,-.015*w], head:[.03*sin(t*1.3),.1*sin(t*.6),.02*w], shL:[0,0,.1+.02*sin(t*1.7)], shR:[0,0,-.1-.02*sin(t*1.7)], thL:[0,0,.03*w], thR:[0,0,.03*w], tail:[0,.35*sin(t*2.4),0]}; }},
   walk:{label:'Walk to', dur:60, cat:'move', loco:'walk', fn:(t,u,x) => gait(x.ph, false)},
   run:{label:'Run to', dur:36, cat:'move', loco:'run', fn:(t,u,x) => gait(x.ph, true)},
-  wave:{label:'Wave', dur:48, cat:'gesture', expr:'happy', fn:(t,u) => { const k = ramp(u); return {shR:[0,0,lerp(-.1,-2.55,k)], elR:[lerp(-.12,-.15,k),0,k*(.3+.45*sin(t*11))], shL:[0,0,.12], head:[-.05*k,0,-.08*k], chest:[0,0,.05*k]}; }},
-  talk:{label:'Talk', dur:60, cat:'talk', talk:true, fn:t => ({head:[.06*sin(t*3.1),.12*sin(t*1.7),.05*sin(t*2.3)], shR:[-.35-.25*sin(t*2.6),0,-.25], elR:[-.9-.3*sin(t*3.3),0,0], shL:[-.15*sin(t*1.9),0,.15], elL:[-.4,0,0], chest:[.03*sin(t*2),.06*sin(t*1.3),0]})},
+  wave:{label:'Wave', dur:48, cat:'gesture', expr:'happy', fn:(t,u) => { const k = ramp(u); return {shR:[0,0,lerp(-.1,-2.55,k)], elR:[lerp(-.12,-.15,k),0,k*(.3+.45*sin(t*11))], shL:[0,0,.12], head:[-.05*k,0,-.08*k], chest:[0,0,.05*k], handR:.35 - .3*k}; }},
+  talk:{label:'Talk', dur:60, cat:'talk', talk:true, fn:t => ({head:[.06*sin(t*3.1),.12*sin(t*1.7),.05*sin(t*2.3)], shR:[-.35-.25*sin(t*2.6),0,-.25], elR:[-.9-.3*sin(t*3.3),0,0], shL:[-.15*sin(t*1.9),0,.15], elL:[-.4,0,0], chest:[.03*sin(t*2),.06*sin(t*1.3),0], handR:.18 + .18*sin(t*2.2), handL:.42})},
   jump:{label:'Jump', dur:30, cat:'gesture', expr:'happy', fn:(t,u) => {
     let k = 0, air = 0;
     if(u < .25) k = smooth(u/.25); else if(u < .7){ k = 1 - smooth((u-.25)/.1); air = sin((u-.25)/.45*Math.PI); } else k = sin((u-.7)/.3*Math.PI)*.8;
@@ -2388,9 +2409,9 @@ const ACTIONS = {
     return {hips:[0,.35*s,.12*s], chest:[0,-.2*s,-.1*s], head:[0,.2*s,.15*sin(b+1)], shL:[0,0,1.6+.8*s], shR:[0,0,-1.6+.8*s], elL:[-.5,0,.6*s], elR:[-.5,0,.6*s],
       thL:[-.25*Math.max(0,s),0,.08], thR:[-.25*Math.max(0,-s),0,-.08], knL:[.5*Math.max(0,s),0,0], knR:[.5*Math.max(0,-s),0,0], rootY:-.03+.04*abs(sin(b*2)), tail:[0,.6*s,0]}; }},
   cheer:{label:'Cheer', dur:48, cat:'gesture', expr:'happy', fn:t => { const h = abs(sin(t*8));
-    return {shL:[0,0,2.6+.2*sin(t*16)], shR:[0,0,-2.6-.2*sin(t*16)], elL:[-.3,0,0], elR:[-.3,0,0], rootY:.12*h, thL:[-.2*h,0,0], thR:[-.2*h,0,0], knL:[.4*h,0,0], knR:[.4*h,0,0], head:[-.15,0,0], face:{open:.55}}; }},
-  point:{label:'Point', dur:42, cat:'gesture', fn:(t,u) => { const k = ramp(u); return {shR:[-1.45*k,0,-.1-.15*k], elR:[-.12*(1-k),0,0], head:[0,-.25*k,0], chest:[0,-.2*k,0], face:{open:.2*k}}; }},
-  think:{label:'Think', dur:60, cat:'gesture', fn:(t,u) => { const k = ramp(u); return {shR:[-.55*k,0,-.1+.35*k], elR:[-2.2*k,0,-.3*k], head:[-.12*k,.1*k,.12*k], shL:[-.1*k,0,.1], elL:[-.9*k,0,0], face:{brow:.3*k, smile:0}}; }},
+    return {shL:[0,0,2.6+.2*sin(t*16)], shR:[0,0,-2.6-.2*sin(t*16)], elL:[-.3,0,0], elR:[-.3,0,0], rootY:.12*h, thL:[-.2*h,0,0], thR:[-.2*h,0,0], knL:[.4*h,0,0], knR:[.4*h,0,0], head:[-.15,0,0], face:{open:.55}, handL:.08, handR:.08}; }},
+  point:{label:'Point', dur:42, cat:'gesture', fn:(t,u) => { const k = ramp(u); return {shR:[-1.45*k,0,-.1-.15*k], elR:[-.12*(1-k),0,0], head:[0,-.25*k,0], chest:[0,-.2*k,0], face:{open:.2*k}, handR:.35 + .6*k, pointR:k}; }},
+  think:{label:'Think', dur:60, cat:'gesture', fn:(t,u) => { const k = ramp(u); return {shR:[-.55*k,0,-.1+.35*k], elR:[-2.2*k,0,-.3*k], head:[-.12*k,.1*k,.12*k], shL:[-.1*k,0,.1], elL:[-.9*k,0,0], face:{brow:.3*k, smile:0}, handR:.35 + .4*k}; }},
   look:{label:'Look around', dur:60, cat:'still', fn:(t,u) => ({head:[-.05,.8*sin(u*Math.PI*2),0], chest:[0,.25*sin(u*Math.PI*2),0]})},
   sit:{label:'Sit down', dur:72, cat:'still', fn:t => { const k = smooth(t/.6);
     return {rootY:-.33*k, thL:[-1.5*k,0,.08*k], thR:[-1.5*k,0,-.08*k], knL:[.3*k,0,0], knR:[.3*k,0,0], anL:[-.4*k,0,0], anR:[-.4*k,0,0], spine:[-.12*k,0,0], shL:[.35*k,0,.1+.2*k], shR:[.35*k,0,-.1-.2*k], head:[.05*k,.12*sin(t*.7),0]}; }},
@@ -2398,11 +2419,11 @@ const ACTIONS = {
   surprised:{label:'Surprised', dur:36, cat:'emotion', expr:'surprised', fn:(t,u) => { const k = smooth(u*6);
     return {shL:[-.3*k,0,.1+.9*k], shR:[-.3*k,0,-.1-.9*k], elL:[-1.1*k,0,0], elR:[-1.1*k,0,0], spine:[-.12*k,0,0], head:[-.1*k,0,0], rootZ:-.08*k, rootY:.03*sin(u*Math.PI)}; }},
   angry:{label:'Angry', dur:48, cat:'emotion', expr:'angry', fn:t => { const st = abs(sin(t*6));
-    return {shL:[.1,0,.35], shR:[.1,0,-.35], elL:[-1.4,0,-.4], elR:[-1.4,0,.4], head:[.1,0,.06*sin(t*12)], thR:[-.3*st,0,0], knR:[.5*st,0,0], spine:[.1,0,0]}; }},
+    return {shL:[.1,0,.35], shR:[.1,0,-.35], elL:[-1.4,0,-.4], elR:[-1.4,0,.4], head:[.1,0,.06*sin(t*12)], thR:[-.3*st,0,0], knR:[.5*st,0,0], spine:[.1,0,0], handL:1, handR:1}; }},
   namaste:{label:'Namaste', dur:44, cat:'gesture', expr:'happy', fn:(t,u) => { const k = ramp(u), b = sin(clamp((u - .25)/.5)*Math.PI);
-    return {shL:[-.5*k,0,.1-.9*k], shR:[-.5*k,0,-.1+.9*k], elL:[-1.25*k-.12*(1-k),.3*k,0], elR:[-1.25*k-.12*(1-k),-.3*k,0], spine:[.14*b,0,0], head:[.26*b,0,0], face:{smile:.8}}; }},
+    return {shL:[-.5*k,0,.1-.9*k], shR:[-.5*k,0,-.1+.9*k], elL:[-1.25*k-.12*(1-k),.3*k,0], elR:[-1.25*k-.12*(1-k),-.3*k,0], spine:[.14*b,0,0], head:[.26*b,0,0], face:{smile:.8}, handL:.35 - .33*k, handR:.35 - .33*k}; }},
   clap:{label:'Clap', dur:40, cat:'gesture', expr:'happy', fn:(t,u) => { const k = ramp(u), c = Math.pow(abs(sin(t*9)), .6);
-    return {shL:[-.95*k,0,.1-(.42+.16*c)*k], shR:[-.95*k,0,-.1+(.42+.16*c)*k], elL:[-.75*k,.3*k,0], elR:[-.75*k,-.3*k,0], head:[-.05+.05*c,0,0], rootY:.015*c*k}; }},
+    return {shL:[-.95*k,0,.1-(.42+.16*c)*k], shR:[-.95*k,0,-.1+(.42+.16*c)*k], elL:[-.75*k,.3*k,0], elR:[-.75*k,-.3*k,0], head:[-.05+.05*c,0,0], rootY:.015*c*k, handL:.05, handR:.05}; }},
   nod:{label:'Nod yes', dur:30, cat:'gesture', fn:(t,u) => ({head:[.22*sin(u*Math.PI*3)*ramp(u),0,0], chest:[.04*sin(u*Math.PI*3)*ramp(u),0,0]})},
   shake:{label:'Shake no', dur:32, cat:'gesture', fn:(t,u) => ({head:[.04,.38*sin(u*Math.PI*4)*ramp(u),0], face:{brow:.4*ramp(u)}})},
   bow:{label:'Bow', dur:48, cat:'gesture', fn:(t,u) => { const k = sin(clamp(u)*Math.PI);
@@ -2453,7 +2474,8 @@ function clipPose(c, f){
   P.face = Object.assign({}, EXPR[c.p.expr || A.expr || 'neutral'] || {}, P.face);
   const vz = c.p.voice ? voiceAt(c.p.voice.asset, t) : null;
   if(vz){
-    P.face.open = Math.max((P.face.open || 0)*.3, vz.open); P.face.wide = vz.wide;
+    P.face.open = Math.max((P.face.open || 0)*.3, vz.open); P.face.wide = vz.wide; P.face.round = vz.round; P.face.up = (P.face.up || 0) + .45*vz.stress;
+    const hh = P.head || ZERO; P.head = [hh[0] - .05*vz.stress, hh[1], hh[2]];
     const h = P.head || ZERO; P.head = [h[0] + .07*vz.open - .02, h[1], h[2] + .03*Math.sin(t*2.1)*vz.open];
   } else if(c.p.talk ?? A.talk) P.face.open = Math.max(P.face.open || 0, talkMouth(t));
   return P;
@@ -2497,12 +2519,15 @@ function applyPose(o, P){
     const la = .72 - .36*happy - .12*Math.max(0, -brow) + .1*upv;
     for(const L2 of fc.lids){ L2.up.rotation.set(ua, 0, -.2*L2.s*Math.max(0, -brow) + .14*L2.s*Math.max(0, brow)); L2.lo.rotation.set(la, 0, 0); }
   } else fc.eyeL.scale.y = fc.eyeR.scale.y = 1 - .92*clamp(F.blink);
-  fc.smile.scale.set(1, abs(F.smile) < .15 ? .15 : F.smile, 1);
-  fc.open.scale.set((1 + F.up*.1)*(.78 + .5*clamp(F.wide)), .1 + .9*clamp(F.open)*(1.1 - .35*clamp(F.wide)), .45); fc.open.visible = F.open > .04;
+  fc.smile.scale.set(1 - .32*clamp(F.round), abs(F.smile) < .15 ? .15 : F.smile, 1);
+  fc.open.scale.set((1 + F.up*.1)*(.78 + .5*clamp(F.wide))*(1 - .38*clamp(F.round)), .1 + .9*clamp(F.open)*(1.1 - .35*clamp(F.wide)), .45); fc.open.visible = F.open > .04;
   if(fc.teeth){ const sy = .1 + .9*clamp(F.open)*(1.1 - .35*clamp(F.wide)), wx = (1 + F.up*.1)*(.78 + .5*clamp(F.wide)); fc.teeth.visible = fc.tongue.visible = F.open > .14;
     fc.teeth.position.y = -.012 + .05*sy*.62; fc.teeth.scale.set(1.25*wx*.8, .3, .5); fc.tongue.position.y = -.012 - .05*sy*.5; fc.tongue.scale.set(1.1*wx*.75, .2 + .3*clamp(F.open), .7); }
   fc.browL.rotation.z = -F.brow*.4; fc.browR.rotation.z = F.brow*.4;
   fc.eyeL.rotation.set(P.eyeX || 0, P.eyeY || 0, 0); fc.eyeR.rotation.set(P.eyeX || 0, P.eyeY || 0, 0);
+  if(r.hands) for(const k of ['L','R']){ const h = r.hands[k]; if(!h) continue; const cu = clamp(P['hand' + k] ?? .35), pt = clamp(P['point' + k] || 0);
+    h.f.forEach((g, i) => { const cc = i === 0 ? lerp(cu, 0, pt) : lerp(cu, 1, pt); g.rotation.z = -h.sx*cc*1.55; });
+    h.t.rotation.set(-.55 + cu*.2, 0, -h.sx*(.25 + cu*.75)); }
   fc.browL.position.y = fc.browR.position.y = fc.browY + F.up*.03;
 }
 let fluid = true;
@@ -3083,7 +3108,8 @@ function voiceAt(asset, t){
   if(!e){ loadVoiceEnv(asset); return null; }
   const i = Math.floor(t*100);
   if(i < 0 || i >= e.a.length) return {open:0, wide:.3};
-  return {open:e.a[i], wide:e.z[i]};
+  const op = e.a[i], wd = e.z[i], prev = e.a[Math.max(0, i - 6)] || 0;
+  return {open:op, wide:wd, round:clamp(op*1.6)*clamp(1 - wd*1.8), stress:clamp((op - prev)*2.2)};
 }
 const voiceEls = {};
 function trackList(){
