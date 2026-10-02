@@ -1,0 +1,824 @@
+{
+ "nepal": {
+  "label": "Nepal (Nepali)",
+  "lang": "ne",
+  "langName": "Nepali",
+  "script": "Devanagari",
+  "festival": "Dashain",
+  "festivals": [
+   "Dashain",
+   "Tihar",
+   "Holi",
+   "Teej",
+   "Losar"
+  ],
+  "setting": "a hill village in Nepal with terraced fields, a white stupa, prayer flags and snow mountains on the horizon",
+  "foods": [
+   "sel roti",
+   "momo",
+   "dal bhat",
+   "yomari"
+  ],
+  "names": {
+   "m": [
+    "Bibek",
+    "Aayush",
+    "Suraj",
+    "Pemba",
+    "Nabin",
+    "Kiran"
+   ],
+   "f": [
+    "Asha",
+    "Sita",
+    "Pema",
+    "Srijana",
+    "Kopila",
+    "Laxmi"
+   ],
+   "elder_f": "Hajurama",
+   "elder_m": "Hajurbuba"
+  },
+  "props": [
+   "mountains",
+   "stupa",
+   "prayer_flags",
+   "house",
+   "pine",
+   "pine",
+   "rock",
+   "flowers",
+   "pots"
+  ],
+  "env": {
+   "time": "day",
+   "ground": "#7fa45a",
+   "top": "#6fa6e0",
+   "horizon": "#e8eef0"
+  },
+  "skin": [
+   1,
+   4
+  ],
+  "wardrobe": {
+   "m": [
+    {
+     "style": "daura",
+     "top": "#f1ead8",
+     "bottom": "#f1ead8",
+     "hat": "topi"
+    },
+    {
+     "style": "pants",
+     "top": "#3b6fb6",
+     "bottom": "#3a3f4a",
+     "hat": "none"
+    }
+   ],
+   "f": [
+    {
+     "style": "sari",
+     "top": "#c0392b",
+     "bottom": "#c0392b",
+     "hair": "braid"
+    },
+    {
+     "style": "kurta",
+     "top": "#e67e22",
+     "bottom": "#f3e6c8",
+     "hair": "long"
+    }
+   ]
+  },
+  "native": {
+   "Bibek": "बिबेक",
+   "Aayush": "आयुष",
+   "Suraj": "सुरज",
+   "Pemba": "पेम्बा",
+   "Nabin": "नबिन",
+   "Kiran": "किरण",
+   "Asha": "आशा",
+   "Sita": "सीता",
+   "Pema": "पेमा",
+   "Srijana": "सृजना",
+   "Kopila": "कोपिला",
+   "Laxmi": "लक्ष्मी",
+   "Hajurama": "हजुरआमा",
+   "Hajurbuba": "हजुरबुबा"
+  }
+ },
+ "india-hindi": {
+  "label": "India (Hindi)",
+  "lang": "hi",
+  "langName": "Hindi",
+  "script": "Devanagari",
+  "festival": "Makar Sankranti",
+  "festivals": [
+   "Diwali",
+   "Holi",
+   "Makar Sankranti",
+   "Raksha Bandhan",
+   "Navratri"
+  ],
+  "setting": "a north Indian village with a small temple, a peepal tree, mud houses and a market stall",
+  "foods": [
+   "laddoo",
+   "jalebi",
+   "roti",
+   "khichdi"
+  ],
+  "names": {
+   "m": [
+    "Aarav",
+    "Rohan",
+    "Kabir",
+    "Arjun",
+    "Vivek",
+    "Ishaan"
+   ],
+   "f": [
+    "Priya",
+    "Meera",
+    "Ananya",
+    "Kavya",
+    "Radha",
+    "Sneha"
+   ],
+   "elder_f": "Dadi",
+   "elder_m": "Dadaji"
+  },
+  "props": [
+   "temple",
+   "banyan",
+   "house",
+   "stall",
+   "well",
+   "pots",
+   "flowers",
+   "bush"
+  ],
+  "env": {
+   "time": "golden",
+   "ground": "#a89a62",
+   "top": "#7aa3d8",
+   "horizon": "#f3d9a8"
+  },
+  "skin": [
+   1,
+   5
+  ],
+  "wardrobe": {
+   "m": [
+    {
+     "style": "kurta",
+     "top": "#f4f0e2",
+     "bottom": "#f4f0e2",
+     "hat": "none"
+    },
+    {
+     "style": "kurta",
+     "top": "#2e86c1",
+     "bottom": "#f0ead6",
+     "hat": "none"
+    }
+   ],
+   "f": [
+    {
+     "style": "sari",
+     "top": "#e84393",
+     "bottom": "#e84393",
+     "hair": "bun",
+     "bindi": true
+    },
+    {
+     "style": "kurta",
+     "top": "#f1c40f",
+     "bottom": "#c0392b",
+     "hair": "braid",
+     "bindi": true
+    }
+   ]
+  },
+  "native": {
+   "Aarav": "आरव",
+   "Rohan": "रोहन",
+   "Kabir": "कबीर",
+   "Arjun": "अर्जुन",
+   "Vivek": "विवेक",
+   "Ishaan": "ईशान",
+   "Priya": "प्रिया",
+   "Meera": "मीरा",
+   "Ananya": "अनन्या",
+   "Kavya": "काव्या",
+   "Radha": "राधा",
+   "Sneha": "स्नेहा",
+   "Dadi": "दादी",
+   "Dadaji": "दादाजी"
+  }
+ },
+ "india-telugu": {
+  "label": "India (Telugu)",
+  "lang": "te",
+  "langName": "Telugu",
+  "script": "Telugu",
+  "festival": "Sankranti",
+  "festivals": [
+   "Sankranti",
+   "Ugadi",
+   "Bathukamma",
+   "Dasara",
+   "Deepavali"
+  ],
+  "setting": "a village on the Godavari delta with coconut palms, a temple tower, a well and a muggu (rangoli) at the doorstep",
+  "foods": [
+   "pongali",
+   "ariselu",
+   "pulihora",
+   "pesarattu"
+  ],
+  "names": {
+   "m": [
+    "Ravi",
+    "Srinu",
+    "Venkat",
+    "Chaitanya",
+    "Raju",
+    "Kiran"
+   ],
+   "f": [
+    "Lakshmi",
+    "Padma",
+    "Sravani",
+    "Chinni",
+    "Swathi",
+    "Bhavani"
+   ],
+   "elder_f": "Nanamma",
+   "elder_m": "Thatha"
+  },
+  "props": [
+   "gopuram",
+   "palm",
+   "palm",
+   "house",
+   "kolam",
+   "well",
+   "cart",
+   "pots",
+   "flowers"
+  ],
+  "env": {
+   "time": "day",
+   "ground": "#9a8a54",
+   "top": "#6aa5dc",
+   "horizon": "#f1e9d0"
+  },
+  "skin": [
+   3,
+   6
+  ],
+  "wardrobe": {
+   "m": [
+    {
+     "style": "dhoti",
+     "top": "#f7f3e8",
+     "bottom": "#f7f3e8",
+     "hat": "none"
+    },
+    {
+     "style": "kurta",
+     "top": "#27ae60",
+     "bottom": "#f5efe0",
+     "hat": "none"
+    }
+   ],
+   "f": [
+    {
+     "style": "sari",
+     "top": "#8e44ad",
+     "bottom": "#16a085",
+     "hair": "braid",
+     "bindi": true
+    },
+    {
+     "style": "sari",
+     "top": "#f39c12",
+     "bottom": "#c0392b",
+     "hair": "braid",
+     "bindi": true
+    }
+   ]
+  },
+  "native": {
+   "Ravi": "రవి",
+   "Srinu": "శ్రీను",
+   "Venkat": "వెంకట్",
+   "Chaitanya": "చైతన్య",
+   "Raju": "రాజు",
+   "Kiran": "కిరణ్",
+   "Lakshmi": "లక్ష్మి",
+   "Padma": "పద్మ",
+   "Sravani": "శ్రావణి",
+   "Chinni": "చిన్ని",
+   "Swathi": "స్వాతి",
+   "Bhavani": "భవాని",
+   "Nanamma": "నానమ్మ",
+   "Thatha": "తాత"
+  }
+ },
+ "india-tamil": {
+  "label": "India (Tamil)",
+  "lang": "ta",
+  "langName": "Tamil",
+  "script": "Tamil",
+  "festival": "Pongal",
+  "festivals": [
+   "Pongal",
+   "Deepavali",
+   "Karthigai Deepam",
+   "Tamil Puthandu"
+  ],
+  "setting": "a Tamil village with a colourful gopuram, coconut palms, a kolam at the doorstep and clay pongal pots",
+  "foods": [
+   "sakkarai pongal",
+   "idli",
+   "vadai",
+   "payasam"
+  ],
+  "names": {
+   "m": [
+    "Murugan",
+    "Kavin",
+    "Arul",
+    "Selvam",
+    "Karthik",
+    "Tamizh"
+   ],
+   "f": [
+    "Meena",
+    "Selvi",
+    "Kayal",
+    "Nila",
+    "Revathi",
+    "Malar"
+   ],
+   "elder_f": "Paati",
+   "elder_m": "Thatha"
+  },
+  "props": [
+   "gopuram",
+   "palm",
+   "palm",
+   "house",
+   "kolam",
+   "pots",
+   "diyas",
+   "cart",
+   "bush"
+  ],
+  "env": {
+   "time": "golden",
+   "ground": "#a07a4f",
+   "top": "#6d9fd6",
+   "horizon": "#f5d6a2"
+  },
+  "skin": [
+   3,
+   6
+  ],
+  "wardrobe": {
+   "m": [
+    {
+     "style": "dhoti",
+     "top": "#f7f3e8",
+     "bottom": "#f7f3e8",
+     "hat": "none"
+    },
+    {
+     "style": "pants",
+     "top": "#d35400",
+     "bottom": "#2c3e50",
+     "hat": "none"
+    }
+   ],
+   "f": [
+    {
+     "style": "sari",
+     "top": "#c0392b",
+     "bottom": "#f1c40f",
+     "hair": "braid",
+     "bindi": true
+    },
+    {
+     "style": "sari",
+     "top": "#27ae60",
+     "bottom": "#8e44ad",
+     "hair": "braid",
+     "bindi": true
+    }
+   ]
+  },
+  "native": {
+   "Murugan": "முருகன்",
+   "Kavin": "கவின்",
+   "Arul": "அருள்",
+   "Selvam": "செல்வம்",
+   "Karthik": "கார்த்திக்",
+   "Tamizh": "தமிழ்",
+   "Meena": "மீனா",
+   "Selvi": "செல்வி",
+   "Kayal": "கயல்",
+   "Nila": "நிலா",
+   "Revathi": "ரேவதி",
+   "Malar": "மலர்",
+   "Paati": "பாட்டி",
+   "Thatha": "தாத்தா"
+  }
+ },
+ "india-kannada": {
+  "label": "India (Kannada)",
+  "lang": "kn",
+  "langName": "Kannada",
+  "script": "Kannada",
+  "festival": "Ugadi",
+  "festivals": [
+   "Ugadi",
+   "Mysuru Dasara",
+   "Sankranti"
+  ],
+  "setting": "a Karnataka village with a stone temple, areca palms and a bullock cart",
+  "foods": [
+   "obbattu",
+   "bisi bele bath",
+   "ragi mudde"
+  ],
+  "names": {
+   "m": [
+    "Manju",
+    "Shivu",
+    "Prakash",
+    "Darshan"
+   ],
+   "f": [
+    "Kaveri",
+    "Shruti",
+    "Gowri",
+    "Nandini"
+   ],
+   "elder_f": "Ajji",
+   "elder_m": "Ajja"
+  },
+  "props": [
+   "temple",
+   "palm",
+   "house",
+   "cart",
+   "kolam",
+   "pots",
+   "flowers"
+  ],
+  "env": {
+   "time": "day",
+   "ground": "#8f9a58",
+   "top": "#6aa5dc",
+   "horizon": "#eef0d8"
+  },
+  "skin": [
+   3,
+   6
+  ],
+  "wardrobe": {
+   "m": [
+    {
+     "style": "dhoti",
+     "top": "#f7f3e8",
+     "bottom": "#f7f3e8"
+    }
+   ],
+   "f": [
+    {
+     "style": "sari",
+     "top": "#d35400",
+     "bottom": "#16a085",
+     "hair": "braid",
+     "bindi": true
+    }
+   ]
+  }
+ },
+ "india-malayalam": {
+  "label": "India (Malayalam)",
+  "lang": "ml",
+  "langName": "Malayalam",
+  "script": "Malayalam",
+  "festival": "Onam",
+  "festivals": [
+   "Onam",
+   "Vishu",
+   "Thrissur Pooram"
+  ],
+  "setting": "a Kerala backwater village with coconut palms, a tiled-roof house and a flower carpet (pookalam)",
+  "foods": [
+   "sadya",
+   "payasam",
+   "appam"
+  ],
+  "names": {
+   "m": [
+    "Arjun",
+    "Unni",
+    "Nikhil",
+    "Sreejith"
+   ],
+   "f": [
+    "Anjali",
+    "Lekha",
+    "Divya",
+    "Meenakshi"
+   ],
+   "elder_f": "Ammamma",
+   "elder_m": "Appooppan"
+  },
+  "props": [
+   "palm",
+   "palm",
+   "palm",
+   "house",
+   "kolam",
+   "pots",
+   "diyas",
+   "bush"
+  ],
+  "env": {
+   "time": "day",
+   "ground": "#6f9a4e",
+   "top": "#6aa5dc",
+   "horizon": "#eef3e0"
+  },
+  "skin": [
+   3,
+   6
+  ],
+  "wardrobe": {
+   "m": [
+    {
+     "style": "dhoti",
+     "top": "#f7f3e8",
+     "bottom": "#f7f3e8"
+    }
+   ],
+   "f": [
+    {
+     "style": "sari",
+     "top": "#f5e6b8",
+     "bottom": "#f5e6b8",
+     "hair": "long",
+     "bindi": true
+    }
+   ]
+  }
+ },
+ "india-bengali": {
+  "label": "India (Bengali)",
+  "lang": "bn",
+  "langName": "Bengali",
+  "script": "Bengali",
+  "festival": "Durga Puja",
+  "festivals": [
+   "Durga Puja",
+   "Poila Boishakh",
+   "Saraswati Puja"
+  ],
+  "setting": "a Bengal village with a pond, banana and palm trees, a thatched house and a small temple",
+  "foods": [
+   "rasgulla",
+   "luchi",
+   "mishti doi"
+  ],
+  "names": {
+   "m": [
+    "Rahul",
+    "Sourav",
+    "Arnab",
+    "Dipu"
+   ],
+   "f": [
+    "Rupa",
+    "Mou",
+    "Tania",
+    "Durga"
+   ],
+   "elder_f": "Thakuma",
+   "elder_m": "Dadu"
+  },
+  "props": [
+   "temple",
+   "palm",
+   "banyan",
+   "house",
+   "pots",
+   "diyas",
+   "flowers"
+  ],
+  "env": {
+   "time": "golden",
+   "ground": "#7d9a52",
+   "top": "#6d9fd6",
+   "horizon": "#f5dcae"
+  },
+  "skin": [
+   2,
+   5
+  ],
+  "wardrobe": {
+   "m": [
+    {
+     "style": "kurta",
+     "top": "#f4f0e2",
+     "bottom": "#f4f0e2"
+    }
+   ],
+   "f": [
+    {
+     "style": "sari",
+     "top": "#f5f0e6",
+     "bottom": "#c0392b",
+     "hair": "bun",
+     "bindi": true
+    }
+   ]
+  }
+ },
+ "english-uk": {
+  "label": "English (UK)",
+  "lang": "en",
+  "langName": "English",
+  "script": "Latin",
+  "accent": "en_GB",
+  "festival": "the village summer fair",
+  "festivals": [
+   "the summer fair",
+   "Bonfire Night",
+   "Christmas",
+   "May Day"
+  ],
+  "setting": "an English village green with a thatched cottage, oak trees, a fence and a bench",
+  "foods": [
+   "scones",
+   "jam tarts",
+   "fish and chips"
+  ],
+  "names": {
+   "m": [
+    "Oliver",
+    "Harry",
+    "Jack",
+    "George",
+    "Alfie"
+   ],
+   "f": [
+    "Amelia",
+    "Olivia",
+    "Isla",
+    "Poppy",
+    "Freya"
+   ],
+   "elder_f": "Granny",
+   "elder_m": "Grandad"
+  },
+  "props": [
+   "cottage",
+   "tree",
+   "tree",
+   "fence",
+   "bench",
+   "flowers",
+   "bush",
+   "lamp"
+  ],
+  "env": {
+   "time": "day",
+   "ground": "#7fb05a",
+   "top": "#7fb1e3",
+   "horizon": "#e3edf2"
+  },
+  "skin": [
+   0,
+   7
+  ],
+  "wardrobe": {
+   "m": [
+    {
+     "style": "pants",
+     "top": "#2e86c1",
+     "bottom": "#34495e"
+    },
+    {
+     "style": "shorts",
+     "top": "#e74c3c",
+     "bottom": "#5d6d7e"
+    }
+   ],
+   "f": [
+    {
+     "style": "skirt",
+     "top": "#f1c40f",
+     "bottom": "#5b4b8a",
+     "hair": "ponytail"
+    },
+    {
+     "style": "pants",
+     "top": "#16a085",
+     "bottom": "#2c3e50",
+     "hair": "bob"
+    }
+   ]
+  }
+ },
+ "english-us": {
+  "label": "English (US)",
+  "lang": "en",
+  "langName": "English",
+  "script": "Latin",
+  "accent": "en_US",
+  "festival": "the Fourth of July picnic",
+  "festivals": [
+   "Thanksgiving",
+   "Halloween",
+   "the Fourth of July",
+   "a backyard birthday"
+  ],
+  "setting": "a small-town park with a lamp post, maple trees, a picket fence and a house with a porch",
+  "foods": [
+   "pancakes",
+   "apple pie",
+   "hot dogs"
+  ],
+  "names": {
+   "m": [
+    "Liam",
+    "Noah",
+    "Mason",
+    "Leo",
+    "Eli"
+   ],
+   "f": [
+    "Emma",
+    "Ava",
+    "Mia",
+    "Zoe",
+    "Lily"
+   ],
+   "elder_f": "Grandma",
+   "elder_m": "Grandpa"
+  },
+  "props": [
+   "house",
+   "tree",
+   "tree",
+   "fence",
+   "bench",
+   "lamp",
+   "ball",
+   "flowers"
+  ],
+  "env": {
+   "time": "day",
+   "ground": "#7fb05a",
+   "top": "#7fb1e3",
+   "horizon": "#e3edf2"
+  },
+  "skin": [
+   0,
+   7
+  ],
+  "wardrobe": {
+   "m": [
+    {
+     "style": "pants",
+     "top": "#c0392b",
+     "bottom": "#2c3e50"
+    },
+    {
+     "style": "shorts",
+     "top": "#2980b9",
+     "bottom": "#7f8c8d"
+    }
+   ],
+   "f": [
+    {
+     "style": "skirt",
+     "top": "#e84393",
+     "bottom": "#2c3e50",
+     "hair": "ponytail"
+    },
+    {
+     "style": "pants",
+     "top": "#f39c12",
+     "bottom": "#34495e",
+     "hair": "curly"
+    }
+   ]
+  }
+ }
+}

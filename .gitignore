@@ -1,0 +1,7 @@
+data/
+logs/
+releases/
+.DS_Store
+.venv/
+__pycache__/
+mayatoon

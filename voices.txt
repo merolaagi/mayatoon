@@ -1,0 +1,13 @@
+# Offline Piper voices to download: full names, or a language code for the best two in that language.
+# Browse: https://huggingface.co/rhasspy/piper-voices   Re-run install.sh after editing.
+# Telugu and Tamil offline voices may be missing from Piper; for natural Telugu, Tamil and Nepali
+# add an Azure Speech key in AI and voice settings (or record the lines yourself).
+en_US-amy-medium
+en_US-ryan-medium
+en_GB-alba-medium
+en_GB-northern_english_male-medium
+hi_IN
+ne_NP
+te_IN
+ta_IN
+ml_IN

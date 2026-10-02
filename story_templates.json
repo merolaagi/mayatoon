@@ -1,0 +1,65 @@
+{
+  "_about": "Offline story arcs used when no AI engine is set up. Roles: A child, B friend, E elder, N narrator. {A} {B} {E} {F} are replaced with names, the elder title and the festival. A line can be {m:..., f:...} when the grammar depends on the speaker's gender.",
+  "arcs": {
+    "lost_kite": {
+      "keywords": ["kite", "lost", "find", "festival", "friend", "help", "search"],
+      "cast": ["A", "B"],
+      "title": {"en": "The Lost Kite", "ne": "हराएको चङ्गा", "hi": "खोई हुई पतंग", "te": "తప్పిపోయిన గాలిపటం", "ta": "தொலைந்த பட்டம்"},
+      "beats": [
+        {"who": "N", "say": {"en": "On the morning of {F}, the whole village was bright and busy.", "ne": "दशैंको बिहान, गाउँभरि रमाइलो थियो।", "hi": "मकर संक्रांति की सुबह, पूरे गाँव में खूब रौनक थी।", "te": "సంక్రాంతి ఉదయం, ఊరంతా సందడిగా ఉంది.", "ta": "பொங்கல் காலையில், ஊரே கொண்டாட்டமாக இருந்தது."},
+         "en": "On the morning of {F}, the whole village was bright and busy."},
+        {"who": "A", "action": "look", "expr": "sad"},
+        {"who": "A", "action": "talk", "expr": "sad", "at": "B",
+         "say": {"en": "Hello {B}! Have you seen my kite?", "ne": "नमस्ते {B}! तिमीले मेरो चङ्गा देख्यौ?", "hi": "नमस्ते {B}! क्या तुमने मेरी पतंग देखी?", "te": "నమస్కారం {B}! నా గాలిపటం చూశావా?", "ta": "வணக்கம் {B}! என் பட்டத்தைப் பார்த்தாயா?"},
+         "en": "Hello {B}! Have you seen my kite?"},
+        {"who": "B", "action": "think", "at": "A",
+         "say": {"en": "Hmm... where was it last?", "ne": "हम्म... अन्तिम पटक कहाँ थियो?", "hi": "हम्म... आखिरी बार कहाँ थी?", "te": "హ్మ్... చివరిసారి ఎక్కడ ఉంది?", "ta": "ம்ம்... கடைசியாக எங்கே இருந்தது?"},
+         "en": "Hmm... where was it last?"},
+        {"who": "A", "action": "sad", "at": "B",
+         "say": {"en": "Near the big tree. Now it is gone.", "ne": "ठूलो रूख नजिक। अब हरायो।", "hi": "बड़े पेड़ के पास। अब नहीं मिल रही।", "te": "పెద్ద చెట్టు దగ్గర. ఇప్పుడు కనిపించడం లేదు.", "ta": "பெரிய மரத்தின் அருகில். இப்போது காணவில்லை."},
+         "en": "Near the big tree. Now it is gone."},
+        {"who": "B", "action": "point", "expr": "surprised",
+         "say": {"en": "Look! There, up in the tree!", "ne": "हेर! त्यहाँ, रूखमाथि!", "hi": "देखो! वहाँ, पेड़ के ऊपर!", "te": "చూడు! అక్కడ, చెట్టు మీద!", "ta": "பார்! அங்கே, மரத்தின் மேலே!"},
+         "en": "Look! There, up in the tree!"},
+        {"who": "A", "action": "run", "to": "prop:tree"},
+        {"who": "A", "action": "jump", "expr": "happy"},
+        {"who": "A", "action": "cheer", "expr": "happy", "at": "B",
+         "say": {"en": "I found it! Thank you, {B}!", "ne": "भेटियो! धन्यवाद, {B}!", "hi": "मिल गई! धन्यवाद, {B}!", "te": "దొరికింది! ధన్యవాదాలు, {B}!", "ta": "கிடைத்துவிட்டது! நன்றி, {B}!"},
+         "en": "I found it! Thank you, {B}!"},
+        {"who": "B", "action": "walk", "to": "A"},
+        {"who": "B", "action": "talk", "expr": "happy", "at": "A",
+         "say": {"en": "Come on, let's celebrate together!", "ne": "आऊ, सँगै रमाइलो गरौं!", "hi": "आओ, साथ में जश्न मनाएँ!", "te": "రా, కలిసి పండుగ చేసుకుందాం!", "ta": "வா, சேர்ந்து கொண்டாடலாம்!"},
+         "en": "Come on, let's celebrate together!"},
+        {"who": "A", "action": "dance"},
+        {"who": "B", "action": "dance", "parallel": true}
+      ]
+    },
+    "elder_story": {
+      "keywords": ["grand", "elder", "story", "learn", "lesson", "teach", "wisdom", "kind", "kindness", "nani", "dadi", "paati", "hajurama"],
+      "cast": ["A", "E"],
+      "title": {"en": "Grandma's Little Fox", "ne": "हजुरआमाको सानो फ्याउरो", "hi": "दादी की छोटी लोमड़ी", "te": "నానమ్మ చెప్పిన చిన్న నక్క", "ta": "பாட்டி சொன்ன சிறிய நரி"},
+      "beats": [
+        {"who": "N", "say": {"en": "One evening, {A} sat with {E} in the courtyard.", "ne": "एक साँझ, {A} र हजुरआमा आँगनमा बसे।", "hi": "एक शाम, {A} और दादी आँगन में बैठे थे।", "te": "ఒక సాయంత్రం, {A}, నానమ్మ వరండాలో కూర్చున్నారు.", "ta": "ஒரு மாலை நேரம், பாட்டி திண்ணையில் அமர்ந்திருந்தார்."},
+         "en": "One evening, {A} sat with {E} in the courtyard."},
+        {"who": "A", "action": "namaste", "expr": "happy", "at": "E"},
+        {"who": "A", "action": "talk", "expr": "happy", "at": "E",
+         "say": {"en": "{E}, please tell me a story!", "ne": "हजुरआमा, एउटा कथा सुनाउनुस् न!", "hi": "दादी, एक कहानी सुनाओ ना!", "te": "నానమ్మా, ఒక కథ చెప్పు!", "ta": "பாட்டி, ஒரு கதை சொல்லுங்கள்!"},
+         "en": "{E}, please tell me a story!"},
+        {"who": "E", "action": "think", "at": "A",
+         "say": {"en": "Long ago, a little fox helped a tired bear.", "ne": "धेरै पहिले, एउटा सानो फ्याउरोले थाकेको भालुलाई मद्दत गर्‍यो।", "hi": "बहुत पहले, एक छोटी लोमड़ी ने एक थके हुए भालू की मदद की।", "te": "చాలా కాలం క్రితం, ఒక చిన్న నక్క అలసిపోయిన ఎలుగుబంటికి సహాయం చేసింది.", "ta": "முன்னொரு காலத்தில், ஒரு சிறிய நரி களைத்துப்போன கரடிக்கு உதவியது."},
+         "en": "Long ago, a little fox helped a tired bear."},
+        {"who": "A", "action": "surprised", "at": "E",
+         "say": {"en": "A little fox helped a big bear?", "ne": "सानो फ्याउरोले ठूलो भालुलाई?", "hi": "छोटी लोमड़ी ने बड़े भालू की?", "te": "చిన్న నక్క పెద్ద ఎలుగుబంటికా?", "ta": "சிறிய நரி பெரிய கரடிக்கா?"},
+         "en": "A little fox helped a big bear?"},
+        {"who": "E", "action": "nod", "expr": "happy", "at": "A",
+         "say": {"en": "Yes. Kindness makes anyone strong.", "ne": "हो। दयाले सबैलाई बलियो बनाउँछ।", "hi": "हाँ। दया सबको मज़बूत बनाती है।", "te": "అవును. దయ అందరినీ బలంగా చేస్తుంది.", "ta": "ஆமாம். அன்பு எல்லோரையும் வலிமையாக்கும்."},
+         "en": "Yes. Kindness makes anyone strong."},
+        {"who": "A", "action": "cheer", "expr": "happy", "at": "E",
+         "say": {"en": "Then I will be kind too!", "ne": "त्यसो भए म पनि दयालु बन्छु!", "hi": {"m": "तो मैं भी दयालु बनूँगा!", "f": "तो मैं भी दयालु बनूँगी!"}, "te": "అయితే నేను కూడా దయగా ఉంటాను!", "ta": "அப்படியென்றால் நானும் அன்பாக இருப்பேன்!"},
+         "en": "Then I will be kind too!"},
+        {"who": "E", "action": "clap", "expr": "happy"},
+        {"who": "A", "action": "dance", "parallel": true}
+      ]
+    }
+  }
+}
