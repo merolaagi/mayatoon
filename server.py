@@ -41,11 +41,12 @@ NAME_RE = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 ASSET_RE = re.compile(r"^[A-Za-z0-9_.-]{1,96}$")
 JOB_RE = re.compile(r"^[A-Za-z0-9_-]{1,80}$")
 AUDIO_EXT = {".mp3", ".wav", ".m4a", ".aac", ".ogg", ".webm", ".opus", ".flac", ".mp4", ".mov"}
-ASSET_EXT = AUDIO_EXT | {".glb", ".png", ".jpg", ".jpeg"}
+ASSET_EXT = AUDIO_EXT | {".glb", ".vrm", ".png", ".jpg", ".jpeg"}
 MAX_BODY = 20 * 1024 * 1024
 MAX_ASSET = 300 * 1024 * 1024
 MAX_FRAME = 60 * 1024 * 1024
 mimetypes.add_type("model/gltf-binary", ".glb")
+mimetypes.add_type("model/gltf-binary", ".vrm")
 mimetypes.add_type("audio/mp4", ".m4a")
 mimetypes.add_type("audio/webm", ".webm")
 
@@ -923,7 +924,7 @@ class Handler(SimpleHTTPRequestHandler):
         if parts and len(parts) == 2 and parts[0] == "assets":
             p = self.asset_path(parts[1])
             if not p:
-                return self.send_json(HTTPStatus.BAD_REQUEST, {"error": "Allowed files: glb, png, jpg and audio or video (mp3, wav, m4a, aac, ogg, webm, flac, mp4, mov)"})
+                return self.send_json(HTTPStatus.BAD_REQUEST, {"error": "Allowed files: glb, vrm, png, jpg and audio or video (mp3, wav, m4a, aac, ogg, webm, flac, mp4, mov)"})
             if not self.read_to_file(p, MAX_ASSET):
                 return self.send_json(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, {"error": "File is empty or larger than 300 MB"})
             return self.send_json(HTTPStatus.OK, {"ok": True, "name": p.name, "url": "media/assets/" + p.name})

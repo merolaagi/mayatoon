@@ -560,6 +560,8 @@ dialog::backdrop{background:rgba(5,6,8,.55);backdrop-filter:blur(4px)}
           <label class="f"><span>Bottom</span><input type="color" id="cBot"></label>
           <label class="f"><span>Clothes</span><select id="cStyle"></select></label>
           <label class="f"><span>Shoes</span><input type="color" id="cShoes"></label>
+          <div class="f" id="cModelW"><span>3D model</span><div style="display:flex;gap:6px;align-items:center;min-width:0"><button class="btn" id="cModelBtn" type="button">Use a model…</button><button class="btn" id="cModelClr" type="button" hidden>Built-in</button></div></div>
+          <div class="hint" id="cModelHint" style="margin:-2px 0 6px">Bring a VRM from VRoid Studio or any Mixamo-rigged GLB: it acts, walks, talks and emotes with everything here.</div>
           <label class="f" id="cHatW"><span>Hat</span><select id="cHat"></select></label>
           <label class="f" id="cBindiW"><span>Bindi</span><input type="checkbox" id="cBindi" style="justify-self:start"></label>
           <div class="f"><span>Size</span><div class="rng"><input type="range" id="cSize" min=".6" max="1.4" step=".01"><output id="oSize"></output></div></div>
@@ -645,8 +647,8 @@ dialog::backdrop{background:rgba(5,6,8,.55);backdrop-filter:blur(4px)}
 <script>
 (function(){
 'use strict';
-const APP_VERSION = '0.8.0';
-const BUILD_ID = '20261002-053504-6241';
+const APP_VERSION = '0.9.0';
+const BUILD_ID = '20261002-174741-7148';
 const $ = s => document.querySelector(s);
 const DEG = Math.PI/180;
 
@@ -1357,7 +1359,9 @@ function fillTypeSections(o){
     $('#cSpecies').value = c.species; $('#cFur').value = c.fur; $('#cFurL').textContent = human ? 'Skin' : 'Fur';
     $('#cToneW').hidden = !human; $('#cMuzW').hidden = human || !SPECIES[c.species].muzzle; $('#cMuz').value = c.muzzle || c.fur;
     $('#cHairW').hidden = $('#cHairCW').hidden = !human; $('#cHair').value = c.hair; $('#cHairC').value = c.hairColor;
-    $('#cHatW').hidden = $('#cBindiW').hidden = !human; $('#cHat').value = c.hat || 'none'; $('#cBindi').checked = !!c.bindi;
+    $('#cHatW').hidden = $('#cBindiW').hidden = !human;
+    $('#cModelBtn').textContent = c.model ? c.model.replace(/^char_\d+-\d+_/, '').slice(0, 26) : 'Use a model…'; $('#cModelClr').hidden = !c.model;
+    $('#cModelHint').textContent = o.loadError || (c.model ? (o.rig && o.rig.model ? `Driven by MayaToon${o.rig.model.vrm ? ', with VRM expressions and lip-sync' : o.rig.model.faceMeshes.length ? ', with face shapes' : ''}.` : 'Loading model…') : 'Bring a VRM from VRoid Studio or any Mixamo-rigged GLB: it acts, walks, talks and emotes with everything here.'); $('#cHat').value = c.hat || 'none'; $('#cBindi').checked = !!c.bindi;
     $('#cTop').value = c.top; $('#cBot').value = c.bottom; $('#cStyle').value = c.style; $('#cShoes').value = c.shoes;
     $('#cSize').value = c.size; $('#oSize').textContent = (+c.size).toFixed(2);
     const sp = SPECIES[c.species] || {}; $('#cFurLenW').hidden = !human && !sp.furLen; $('#cFurLenL').textContent = human ? 'Hair fluff' : 'Fur';
@@ -1395,6 +1399,9 @@ const charField = (id, key, num) => {
 charField('#cFur','fur'); charField('#cMuz','muzzle'); charField('#cHair','hair'); charField('#cHairC','hairColor'); charField('#cTop','top');
 charField('#cBot','bottom'); charField('#cStyle','style'); charField('#cShoes','shoes'); charField('#cSize','size', true); charField('#cHat','hat');
 $('#cBindi').addEventListener('change', e => charEdit(c => { c.bindi = e.target.checked; }, true));
+$('#cModelBtn').addEventListener('click', () => { if(!server) return toast('Character models need the local studio server');
+  pickFile('.vrm,.glb,model/gltf-binary', async f => { try{ toast('Uploading ' + f.name); const name = await uploadBlob(f, 'char', `char_${stamp()}_${f.name}`); charEdit(c => { c.model = name; }, true); }catch(e){ toast(e.message); } }); });
+$('#cModelClr').addEventListener('click', () => charEdit(c => { delete c.model; }, true));
 $('#cSize').addEventListener('input', e => { $('#oSize').textContent = (+e.target.value).toFixed(2); });
 charField('#cFurLen', 'furLen', true);
 $('#cFurLen').addEventListener('input', e => { $('#oFurLen').textContent = (+e.target.value).toFixed(1); });
@@ -2352,6 +2359,9 @@ function buildCharacter(o){
     case 'curl': { const t = part(new THREE.TorusGeometry(.04, .012, 8, 16, Math.PI*1.6), fur, tail, 0, .03, -.03); t.rotation.y = Math.PI/2; break; }
   }
   o.rig = {mover, root, J, face, hands:o._hands || null}; delete o._hands;
+  root.updateMatrixWorld(true);
+  { const rq = root.getWorldQuaternion(new THREE.Quaternion()).invert(); o.rig.bindQ = {}; for(const n of ['hips','spine','chest','neck','head','anL','anR','elL','elR']) o.rig.bindQ[n] = rq.clone().multiply(J[n].getWorldQuaternion(new THREE.Quaternion())).invert(); }
+  if(c.model && server){ root.traverse(n => { if(n.isMesh || n.isLine) n.visible = false; }); loadCharModel(o); }
 }
 
 /* ----- poses & actions ----- */
@@ -2528,6 +2538,7 @@ function applyPose(o, P){
   if(r.hands) for(const k of ['L','R']){ const h = r.hands[k]; if(!h) continue; const cu = clamp(P['hand' + k] ?? .35), pt = clamp(P['point' + k] || 0);
     h.f.forEach((g, i) => { const cc = i === 0 ? lerp(cu, 0, pt) : lerp(cu, 1, pt); g.rotation.z = -h.sx*cc*1.55; });
     h.t.rotation.set(-.55 + cu*.2, 0, -h.sx*(.25 + cu*.75)); }
+  if(r.model) retargetChar(o, P, F);
   fc.browL.position.y = fc.browR.position.y = fc.browY + F.up*.03;
 }
 let fluid = true;
@@ -2615,6 +2626,109 @@ function buildModel(o){
     o.loadError = null;
     applyFrame(); if(o === primary()){ setSelection(sel.slice(), true); refreshAttrs(); }
   }, undefined, () => { o.loadError = 'The model file could not be loaded.'; refreshAttrs(); });
+}
+/* ----- humanoid model characters (VRM, Mixamo, generic glTF) driven by the MayaToon rig ----- */
+const HUMANOID = [
+  ['hips','hips','delta'], ['spine','spine','delta'], ['chest','chest','delta'], ['neck','neck','delta'], ['head','head','delta'],
+  ['leftUpperLeg','thL','dir','leftLowerLeg'], ['leftLowerLeg','knL','dir','leftFoot'], ['rightUpperLeg','thR','dir','rightLowerLeg'], ['rightLowerLeg','knR','dir','rightFoot'],
+  ['leftUpperArm','shL','dir','leftLowerArm'], ['leftLowerArm','elL','dir','leftHand'], ['rightUpperArm','shR','dir','rightLowerArm'], ['rightLowerArm','elR','dir','rightHand']];
+const OUR_CHILD = {thL:'knL', knL:'anL', thR:'knR', knR:'anR', shL:'elL', shR:'elR'};
+const NAME_HINTS = {hips:/^(hips|pelvis)$/, spine:/^spine$/, chest:/^(spine1|chest)$/, neck:/^neck$/, head:/^head$/,
+  leftUpperLeg:/^(left(up)?(upper)?leg|l(eft)?thigh|upperleg\.?l|thigh\.?l)$/, leftLowerLeg:/^(leftleg|leftlowerleg|l(eft)?calf|lowerleg\.?l|shin\.?l)$/, leftFoot:/^(leftfoot|foot\.?l|l(eft)?foot)$/,
+  rightUpperLeg:/^(right(up)?(upper)?leg|r(ight)?thigh|upperleg\.?r|thigh\.?r)$/, rightLowerLeg:/^(rightleg|rightlowerleg|r(ight)?calf|lowerleg\.?r|shin\.?r)$/, rightFoot:/^(rightfoot|foot\.?r|r(ight)?foot)$/,
+  leftUpperArm:/^(leftarm|leftupperarm|upperarm\.?l|l(eft)?upperarm)$/, leftLowerArm:/^(leftforearm|leftlowerarm|forearm\.?l|lowerarm\.?l)$/, leftHand:/^(lefthand|hand\.?l)$/,
+  rightUpperArm:/^(rightarm|rightupperarm|upperarm\.?r|r(ight)?upperarm)$/, rightLowerArm:/^(rightforearm|rightlowerarm|forearm\.?r|lowerarm\.?r)$/, rightHand:/^(righthand|hand\.?r)$/,
+  leftEye:/^(lefteye|eye\.?l)$/, rightEye:/^(righteye|eye\.?r)$/};
+const charModelCache = {};
+function fetchCharModel(name){ return charModelCache[name] ||= fetch(assetURL(name)).then(r => { if(!r.ok) throw new Error('model missing'); return r.arrayBuffer(); }); }
+async function loadCharModel(o){
+  const c = o.char, rig = o.rig, name = c.model;
+  let g;
+  try{ const buf = await fetchCharModel(name); g = await new Promise((ok, no) => gltfLoader.parse(buf.slice(0), '', ok, no)); }
+  catch(e){ o.loadError = 'The character model could not be loaded: ' + (e.message || e); refreshAttrs(); return; }
+  if(o.rig !== rig || o.char.model !== name || !objects.includes(o)) return;
+  const json = g.parser.json, ext = json.extensions || {}, vrm1 = ext.VRMC_vrm, vrm0 = ext.VRM;
+  const bones = {};
+  if(vrm1){ for(const [k, v] of Object.entries(vrm1.humanoid.humanBones)) bones[k] = await g.parser.getDependency('node', v.node); }
+  else if(vrm0){ for(const hb of vrm0.humanoid.humanBones) bones[hb.bone] = await g.parser.getDependency('node', hb.node); }
+  else g.scene.traverse(n => { if(!n.isBone && !(n.type === 'Object3D' && n.children.length)) return; const nm = n.name.replace(/^mixamorig\d*[:_]?/i, '').replace(/^(def|bip\d*|j_bip_[clr])[_ ]?/i, '').replace(/[_ ]/g, '').toLowerCase();
+    for(const [k, re] of Object.entries(NAME_HINTS)) if(!bones[k] && re.test(nm)) bones[k] = n; });
+  const missing = HUMANOID.filter(m => !bones[m[0]]).map(m => m[0]);
+  if(missing.length > 3){ o.loadError = 'This model has no humanoid skeleton MayaToon recognises (missing ' + missing.slice(0, 4).join(', ') + '). Use a VRM from VRoid Studio or a Mixamo-rigged GLB.'; refreshAttrs(); return; }
+  const holder = new THREE.Group(); const sc = g.scene; holder.add(sc);
+  if(vrm0) sc.rotation.y = Math.PI;
+  sc.traverse(n => { if(n.isMesh){ n.castShadow = n.receiveShadow = true; n.frustumCulled = false;
+    const ms = Array.isArray(n.material) ? n.material : [n.material];
+    n.material = ms.map(m => { if(m.isMeshBasicMaterial){ const k = new THREE.MeshStandardMaterial({map:m.map, color:m.color, transparent:m.transparent, opacity:m.opacity, alphaTest:m.alphaTest, side:m.side, roughness:.78, vertexColors:m.vertexColors}); k.skinning = m.skinning; k.morphTargets = m.morphTargets; k.morphNormals = m.morphNormals; k.depthWrite = m.depthWrite; return k; } m.envMapIntensity = .5; return m; });
+    if(n.material.length === 1) n.material = n.material[0]; } });
+  rig.root.add(holder); holder.updateMatrixWorld(true);
+  rig.root.updateMatrixWorld(true);
+  const ry = n => rig.root.worldToLocal(n.getWorldPosition(new THREE.Vector3())).y;
+  let hb, gy;
+  if(bones.head && (bones.leftFoot || bones.rightFoot)){ const hy = ry(bones.head), fy = Math.min(...['leftFoot','rightFoot'].filter(k => bones[k]).map(k => ry(bones[k]))); const leg = hy - fy; gy = fy - leg*.065; hb = (hy + leg*.2) - gy; }
+  else { const box = new THREE.Box3().setFromObject(sc).applyMatrix4(rig.root.matrixWorld.clone().invert()); gy = box.min.y; hb = box.max.y - box.min.y; }
+  const k = 1.45/(hb || 1);
+  holder.scale.setScalar(k); holder.position.y = -gy*k; holder.updateMatrixWorld(true);
+  const rq = rig.root.getWorldQuaternion(new THREE.Quaternion()).invert();
+  const rootPos = v => rig.root.worldToLocal(v);
+  const map = [];
+  for(const [hk, j, mode, child] of HUMANOID){ const b = bones[hk]; if(!b) continue;
+    const e = {b, j, mode, bindQ:rq.clone().multiply(b.getWorldQuaternion(new THREE.Quaternion()))};
+    if(mode === 'dir'){ const cb = bones[child] || b.children[0]; if(!cb){ e.mode = 'delta'; } else { const p0 = rootPos(b.getWorldPosition(new THREE.Vector3())), p1 = rootPos(cb.getWorldPosition(new THREE.Vector3())); e.bindDir = p1.sub(p0).normalize(); } }
+    map.push(e); }
+  const eyes = ['leftEye','rightEye'].map(k => bones[k] ? {b:bones[k], bindQ:bones[k].quaternion.clone()} : null).filter(Boolean);
+  // face: VRM expressions, else ARKit / VRoid morph names
+  const expr = {};
+  const addBind = (preset, mesh, index, w) => { const list = mesh.isMesh ? [mesh] : mesh.children.filter(x => x.isMesh); for(const m of list) if(m.morphTargetInfluences) (expr[preset] ||= []).push([m, index, w]); };
+  if(vrm1 && vrm1.expressions){ for(const [pk, ex] of Object.entries({...(vrm1.expressions.preset || {}), ...(vrm1.expressions.custom || {})})) for(const mb of ex.morphTargetBinds || []) addBind(pk, await g.parser.getDependency('node', mb.node), mb.index, mb.weight); }
+  else if(vrm0 && vrm0.blendShapeMaster){ const v0 = {a:'aa', i:'ih', u:'ou', e:'ee', o:'oh', joy:'happy', angry:'angry', sorrow:'sad', fun:'relaxed', blink:'blink', surprised:'surprised'};
+    for(const gp of vrm0.blendShapeMaster.blendShapeGroups) for(const bd of gp.binds || []){ const nodes = json.nodes.map((nd, i) => nd.mesh === bd.mesh ? i : -1).filter(i => i >= 0);
+      for(const ni of nodes) addBind(v0[gp.presetName] || gp.presetName, await g.parser.getDependency('node', ni), bd.index, (bd.weight || 0)/100); } }
+  else { const RX = {blink:/(^|_)(eyeblink|blink|eye_close|fcl_eye_close$)/i, aa:/(jawopen|mouthopen|(^|_)a$|fcl_mth_a$|viseme_aa)/i, ou:/(mouthfunnel|mouthpucker|(^|_)u$|fcl_mth_u$|viseme_u)/i, oh:/((^|_)o$|fcl_mth_o$|viseme_o)/i, ee:/((^|_)e$|fcl_mth_e$|viseme_e)/i, ih:/((^|_)i$|fcl_mth_i$|viseme_i)/i,
+      happy:/(mouthsmile|smile|joy|fcl_all_joy)/i, sad:/(browinnerup|sorrow|sad)/i, angry:/(browdown|angry)/i, surprised:/(eyewide|surprise)/i};
+    sc.traverse(m => { if(!m.isMesh || !m.morphTargetDictionary) return; for(const [nm, idx] of Object.entries(m.morphTargetDictionary)) for(const [pk, re] of Object.entries(RX)) if(re.test(nm)){ (expr[pk] ||= []).push([m, idx, 1]); break; } }); }
+  const faceMeshes = [...new Set(Object.values(expr).flat().map(x => x[0]))];
+  // VRMC_node_constraint (aim, roll, rotation): helper bones that follow the main skeleton
+  const cons = [], AX = {PositiveX:[1,0,0], NegativeX:[-1,0,0], PositiveY:[0,1,0], NegativeY:[0,-1,0], PositiveZ:[0,0,1], NegativeZ:[0,0,-1], X:[1,0,0], Y:[0,1,0], Z:[0,0,1]};
+  const rqc = rig.root.getWorldQuaternion(new THREE.Quaternion()).invert(), rootQ = n => rqc.clone().multiply(n.getWorldQuaternion(new THREE.Quaternion()));
+  for(let i = 0; i < json.nodes.length; i++){ const nc = ((json.nodes[i].extensions || {}).VRMC_node_constraint || {}).constraint; if(!nc) continue;
+    const type = Object.keys(nc)[0], d = nc[type], dst = await g.parser.getDependency('node', i), src = await g.parser.getDependency('node', d.source);
+    cons.push({type, dst, src, w:d.weight ?? 1, axis:new THREE.Vector3(...(AX[d.aimAxis || d.rollAxis] || [1,0,0])), dstRest:dst.quaternion.clone(), srcRest:src.quaternion.clone(), srcRestRoot:rootQ(src), dstRestRoot:rootQ(dst)}); }
+  rig.model = {holder, map, eyes, expr, faceMeshes, cons, vrm:!!(vrm0 || vrm1), name};
+  rig.root.traverse(n => { if((n.isMesh || n.isLine) && !holder.getObjectById(n.id)) n.visible = false; });
+  o.loadError = null; applyFrame(); refreshAttrs();
+}
+const _rq = new THREE.Quaternion(), _q1 = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3();
+function retargetChar(o, P, F){
+  const rig = o.rig, M = rig.model; if(!M) return;
+  rig.root.updateMatrixWorld(true);
+  rig.root.getWorldQuaternion(_rq).invert();
+  for(const e of M.map){
+    let target;
+    if(e.mode === 'delta'){ const now = _q1.copy(_rq).multiply(rig.J[e.j].getWorldQuaternion(_q2)); target = now.multiply(rig.bindQ[e.j]).multiply(e.bindQ); }
+    else { const a = rig.root.worldToLocal(rig.J[e.j].getWorldPosition(_v1)), b = rig.root.worldToLocal(rig.J[OUR_CHILD[e.j]] ? rig.J[OUR_CHILD[e.j]].getWorldPosition(_v2) : rig.J[e.j].localToWorld(_v2.set(0, -.19, 0)));
+      target = _q1.setFromUnitVectors(e.bindDir, b.sub(a).normalize()).multiply(e.bindQ); }
+    const pq = _q2.copy(_rq).multiply(e.b.parent.getWorldQuaternion(new THREE.Quaternion()));
+    e.b.quaternion.copy(pq.invert().multiply(target)); e.b.updateMatrixWorld(true);
+  }
+  if(M.cons.length){ const I = new THREE.Quaternion();
+    for(const k of M.cons){ const pq = _rq.clone().multiply(k.dst.parent.getWorldQuaternion(new THREE.Quaternion())), base = pq.clone().multiply(k.dstRest);
+      let target;
+      if(k.type === 'rotation'){ const dl = k.srcRest.clone().invert().multiply(k.src.quaternion); target = base.clone().multiply(I.clone().slerp(dl, k.w)); }
+      else if(k.type === 'roll'){ const dl = k.srcRest.clone().invert().multiply(k.src.quaternion); const v = _v1.set(dl.x, dl.y, dl.z), pr = k.axis.clone().multiplyScalar(v.dot(k.axis));
+        const tw = new THREE.Quaternion(pr.x, pr.y, pr.z, dl.w).normalize(); target = base.clone().multiply(I.clone().slerp(tw, k.w)); }
+      else { const p0 = rig.root.worldToLocal(k.dst.getWorldPosition(new THREE.Vector3())), p1 = rig.root.worldToLocal(k.src.getWorldPosition(new THREE.Vector3()));
+        const cur = k.axis.clone().applyQuaternion(base), want = p1.sub(p0).normalize(); target = I.clone().slerp(new THREE.Quaternion().setFromUnitVectors(cur, want), k.w).multiply(base); }
+      k.dst.quaternion.copy(pq.invert().multiply(target)); k.dst.updateMatrixWorld(true); } }
+  for(const ey of M.eyes) ey.b.quaternion.copy(ey.bindQ).multiply(_q1.setFromEuler(new THREE.Euler((P.eyeX || 0)*.7, (P.eyeY || 0)*.7, 0)));
+  if(M.faceMeshes.length){
+    for(const m of M.faceMeshes) m.morphTargetInfluences.fill(0);
+    const op = clamp(F.open), rd = clamp(F.round), wd = clamp(F.wide);
+    const W = {blink:clamp(F.blink), happy:clamp((F.smile - .35)/.65)*.85, sad:clamp(F.brow)*.8, angry:clamp(-F.brow)*.8, surprised:clamp(F.up)*.7,
+      aa:clamp(op*(1 - rd)*(1 - wd*.5)*1.1), ou:clamp(rd*op*1.6), oh:clamp(rd*op*.8), ee:clamp(wd*op*1.1), ih:clamp(wd*op*.5)};
+    if(W.blink > .5) W.happy *= .4;
+    for(const [pk, w] of Object.entries(W)){ if(!w || !M.expr[pk]) continue; for(const [m, idx, bw] of M.expr[pk]) m.morphTargetInfluences[idx] = Math.min(1, m.morphTargetInfluences[idx] + w*bw); }
+  }
 }
 function evalModel(o, f){
   if(!o.rig) return;

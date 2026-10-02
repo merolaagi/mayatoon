@@ -25,6 +25,16 @@ From the terminal:
 
 `make` opens the studio and runs the whole pipeline in the browser (rendering needs the page's WebGL). Movies land in `data/renders`.
 
+## Your own characters (VRM and Mixamo)
+
+For a production look, give characters real models: select a character, then Attribute Editor, Character, **Use a model…**.
+
+- **VRoid Studio** (free, Mac): design a character (hair, face, outfits, including saris and kurtas made with its texture editor), then File, Export as VRM. VRM faces bring blinks, smiles, sad, angry and surprised looks and mouth shapes that follow the voice.
+- **Mixamo** (free with an Adobe account): upload any humanoid model, auto-rig it, download FBX, then convert to GLB (for example in Blender: File, Import FBX, Export glTF binary).
+- Any GLB with a humanoid skeleton named in the usual ways (Hips, Spine, LeftUpLeg, LeftArm…) works.
+
+MayaToon drives the model with its own animation, so all actions, the Story director, auto-cut cameras and renders work unchanged. Respect each model's licence (VRM files carry their terms in their metadata).
+
 ## Voices
 
 - **Offline:** Piper neural voices (edit `voices.txt`), Mac system voices, espeak-ng as a last resort.

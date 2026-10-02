@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0
+- Characters can wear a real 3D model: Attribute Editor, Character, "Use a model…" takes a VRM (VRoid Studio, VRM 0.x or 1.0) or any Mixamo-rigged GLB. MayaToon drives its skeleton, so every action, walk, run, gesture, look-at, Story director scene and render works with it
+- Retargeting in character space: spine, neck and head copy rotation; arms and legs match direction, so T-pose and A-pose models map onto MayaToon motion
+- Faces: VRM expressions (blink, happy, sad, angry, surprised and the aa/ih/ou/ee/oh mouth shapes) follow lip-sync and emotion; ARKit-style or VRoid morph names work on plain GLBs; VRM eye bones follow eye darts and eye contact
+- VRM 1.0 node constraints (aim, roll, rotation) are solved, so twist and helper bones follow the arms and legs
+- Unlit VRM materials are converted to lit ones (keeping skinning and morph targets) so models sit in the scene's light, shadows and ambient occlusion
+- Models are sized from their skeleton and stand on the ground automatically; "Built-in" switches back
+
 ## 0.8.0
 - Hands with four fingers and a thumb that curl per gesture: relaxed at rest, fists when angry, an extended index finger for Point, flat palms for Namaste and Clap, open for Wave and Cheer, loose while talking, tighter while running
 - New walk and run cycle: heel strike and toe-off, knee absorb on contact, hip twist and drop, chest counter-twist, arm swing with elbow follow-through, steadied head, hair and tail swing
