@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0
+- Characters rebuilt on skinned bodies: torso, arms, legs and neck are one continuous skin with weighted joints, so shoulders, elbows, hips and knees bend smoothly instead of showing ball joints; fur follows the skinned limbs
+- Hands with a thumb (paws for animals), shoes with soles and toe caps, trouser cuffs, sleeve cuffs, collars, belts, shirt buttons, a kurta placket with gold buttons
+- Eyes: textured irises with fibres and limbal ring, round or slit pupils, glossy sclera, two catch-lights, real upper and lower eyelids that blink, widen when surprised, droop when sad, narrow when angry and lift into a smile; lashes for women and girls
+- Arched brows, a shaped nose with nostrils, a mouth with teeth and tongue that open with the voice
+- Hair sculpted with strands, a side-swept fringe, glossy clearcoat; ponytail band, braid with ribbon, bun with pin, fuller bob; hair fluff is now optional (Hair fluff slider)
+- Skin and fabric use physically based materials (soft sheen on skin and cloth)
+- Namaste lands with palms together at the chest; sari drape and bindi placement fixed
+
 ## 0.6.0
 - New studio skin: floating rounded panels on a graphite canvas, marigold accent, Manrope type, focus rings, blurred menus and dialogs; dark by default (Display, Switch light / dark)
 - Production viewport (Display menu, on by default): screen-space ambient occlusion, subtle bloom, colour grade with vignette and fine grain, FXAA; Film view adds depth of field focused on the character in shot
