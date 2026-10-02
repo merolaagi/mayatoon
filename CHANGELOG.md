@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0
+- New studio skin: floating rounded panels on a graphite canvas, marigold accent, Manrope type, focus rings, blurred menus and dialogs; dark by default (Display, Switch light / dark)
+- Production viewport (Display menu, on by default): screen-space ambient occlusion, subtle bloom, colour grade with vignette and fine grain, FXAA; Film view adds depth of field focused on the character in shot
+- MP4 renders run the same pipeline at full resolution (Render, Look: Production or Plain; Depth of field on or off), combined with supersampling and motion blur
+- Lighting: sun disc and glow in the sky, horizon haze, aerial perspective on distant scenery, rim light, sun colour that warms toward golden hour and cools at night, 4K soft shadows, textured ground
+
 ## 0.5.0 (MayaToon)
 - Renamed Mini Maya Studio to MayaToon; installs to ~/Sites/mayatoon on port 47219 next to the old app, and copies its scenes once
 - Story director: prompt, culture and language in, finished movie out (write, build, cast, voice, cut, render). Claude, OpenAI or Ollama, with offline templates in Nepali, Hindi, Telugu, Tamil and English

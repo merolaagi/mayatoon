@@ -34,6 +34,9 @@ From the terminal:
 
 ## Motion and look
 
+The production viewport (Display menu) runs ambient occlusion, bloom, a colour grade and anti-aliasing live; Film view adds depth of field on whoever is in shot. Turn it off for a fast viewport on a busy scene. Renders use the same look at full resolution.
+
+
 Natural motion (Display menu) adds weight shift into acceleration, banking on turns, follow-through on head, arms, tail and hair, breathing, eye darts and eye contact with whoever is speaking. Jumps squash and stretch. Playback evaluates in-between frames so it stays smooth on a 60 Hz screen. The filmic tone curve is on by default (Environment). Renders can add motion blur.
 
 ## Install or update

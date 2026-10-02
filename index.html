@@ -6,7 +6,7 @@
 <title>MayaToon Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --chrome:#c4c8cd; --chrome-deep:#b2b7bd; --chrome-raised:#d5d8dc; --line:#959ba2;
@@ -35,7 +35,7 @@
 html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
 body{margin:0;height:100%;background:var(--chrome-deep);color:var(--text);
-  font:13px/1.35 "Barlow","Segoe UI",system-ui,"Noto Sans","Kohinoor Devanagari","Tamil Sangam MN","Telugu Sangam MN",sans-serif;font-variant-numeric:tabular-nums;
+  font:13px/1.35 "Manrope","Segoe UI",system-ui,"Noto Sans","Kohinoor Devanagari","Tamil Sangam MN","Telugu Sangam MN",sans-serif;font-variant-numeric:tabular-nums;
   -webkit-font-smoothing:antialiased;overflow:hidden;user-select:none;-webkit-user-select:none}
 button,input,select,textarea{font:inherit;color:inherit}
 svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
@@ -284,6 +284,95 @@ input[type=password]{width:100%;min-width:0;height:24px;padding:0 5px;border:1px
   .brand span,.brand small{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ===== v0.6 production skin ===== */
+:root:root{
+  --canvas:#0d0f12; --chrome:#181b20; --chrome-deep:#14161a; --chrome-raised:#22262d; --line:#2b3038; --line-soft:#20242a;
+  --text:#e7e9ec; --text-dim:#8c949f; --sel:#f2a33a; --sel-ink:#1b1206; --sel-soft:rgba(242,163,58,.16); --sel2:#f5f7fa; --key:#ef5a4c; --accent2:#3fb8a9;
+  --vp-top:#262c34; --vp-bot:#111418; --field:#0f1215; --tl-bg:#14171b; --tl-tick:#59626d;
+  --graph-bg:#101317; --graph-grid:rgba(255,255,255,.045); --hover:rgba(255,255,255,.055); --r:10px; --shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px rgba(0,0,0,.25);
+  color-scheme:dark;
+}
+:root:root[data-theme="light"]{
+  --canvas:#dfe2e6; --chrome:#f6f7f9; --chrome-deep:#eceef1; --chrome-raised:#ffffff; --line:#d3d7dd; --line-soft:#e3e6ea;
+  --text:#1a1d22; --text-dim:#5f6873; --sel:#d9861a; --sel-ink:#fff; --sel-soft:rgba(217,134,26,.14); --key:#d8473a;
+  --vp-top:#c6ced8; --vp-bot:#8f9aa6; --field:#ffffff; --tl-bg:#eceef1; --tl-tick:#7b8590; --graph-bg:#f2f4f6; --graph-grid:rgba(0,0,0,.06); --hover:rgba(0,0,0,.045);
+  --shadow:0 1px 2px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.06); color-scheme:light;
+}
+:root{background:var(--canvas)}
+body{background:var(--canvas);font:500 13px/1.4 "Manrope","Segoe UI",system-ui,"Noto Sans","Kohinoor Devanagari","Tamil Sangam MN","Telugu Sangam MN",sans-serif;letter-spacing:.005em}
+#app{gap:6px;padding:0 6px 4px;background:var(--canvas);grid-template-rows:42px 86px minmax(0,1fr) 88px 22px;grid-template-columns:48px minmax(0,1fr) 300px}
+.shelf,.tools,.side,.timeline,.center>.view,.center>.graph{border-radius:var(--r);background:var(--chrome);box-shadow:0 0 0 1px var(--line-soft),var(--shadow);overflow:hidden}
+.center{gap:6px;background:transparent}
+.menubar{background:transparent;padding:0 4px;gap:4px}
+.brand{font-weight:800;font-size:14px;letter-spacing:-.01em;gap:9px;margin-right:16px}
+.brand i{width:18px;height:18px;border-radius:50%;background:conic-gradient(from 210deg,var(--sel),#ef5a4c,var(--accent2),var(--sel));box-shadow:0 0 0 3px var(--sel-soft)}
+.brand small{font-weight:600;font-size:11px;padding:1px 6px;border-radius:20px;background:var(--chrome-raised);color:var(--text-dim)}
+.menu summary{padding:5px 11px;border-radius:7px;color:var(--text-dim);font-weight:600}
+.menu summary:hover,.menu[open] summary{background:var(--chrome-raised);color:var(--text)}
+.dd{top:calc(100% + 6px);border-radius:12px;padding:6px;background:color-mix(in srgb,var(--chrome-raised) 92%,transparent);backdrop-filter:blur(18px);border:1px solid var(--line);box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.dd button{padding:7px 10px;border-radius:7px;font-weight:500}
+.dd button.on::after{content:"●";color:var(--sel);font-size:9px;margin-left:8px}
+.status{font-weight:600;padding:3px 10px;border-radius:20px;background:var(--chrome);box-shadow:0 0 0 1px var(--line-soft)}
+.shelf{grid-template-rows:32px minmax(0,1fr)}
+.stabs{background:transparent;border-bottom:1px solid var(--line-soft);padding:4px 8px 0;gap:4px}
+.stab{padding:4px 12px;border-radius:7px 7px 0 0;font-weight:600;font-size:12px}
+.stab.on{background:var(--chrome-raised);color:var(--sel);box-shadow:inset 0 -2px 0 var(--sel)}
+.sbody{padding:6px 8px;gap:4px;background:var(--chrome)}
+.sbtn{min-width:74px;padding:5px 8px;border-radius:9px;gap:4px;font-size:11.5px;font-weight:600;color:var(--text-dim);border:1px solid transparent;transition:background .12s,color .12s,transform .12s}
+.sbtn svg.i{width:22px;height:22px;stroke-width:1.5;color:var(--text)}
+.sbtn:hover{background:var(--chrome-raised);border-color:var(--line);color:var(--text);transform:translateY(-1px)}
+.sbtn:hover svg.i{color:var(--sel)}
+.sbtn.act{border-radius:8px;background:var(--chrome-raised);border-color:var(--line-soft);color:var(--text);padding:3px 11px}
+.tools{padding:8px 0;gap:4px}
+.tbtn{width:36px;height:36px;border-radius:9px;color:var(--text-dim)}
+.tbtn:hover{background:var(--chrome-raised);color:var(--text);border-color:transparent}
+.tbtn.on{background:var(--sel);color:var(--sel-ink);box-shadow:0 4px 14px rgba(242,163,58,.35)}
+.view{background:radial-gradient(120% 90% at 50% 20%,var(--vp-top),var(--vp-bot))}
+.vbar{top:10px;left:10px;right:10px}
+.seg{background:rgba(10,12,15,.55);border-radius:9px;padding:3px;backdrop-filter:blur(12px);box-shadow:0 0 0 1px rgba(255,255,255,.06)}
+.seg button{border-radius:6px;padding:4px 10px;font-weight:600;color:#d8dde3}
+.seg button.on{background:var(--sel);color:var(--sel-ink)}
+.camname,.hud{font-weight:600;letter-spacing:.01em}
+.view.film .camname{top:12px;right:14px;padding:3px 9px;border-radius:6px;background:rgba(10,12,15,.5);backdrop-filter:blur(8px)}
+.toast{border-radius:9px;padding:7px 14px;background:rgba(14,16,19,.86);backdrop-filter:blur(10px);font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.subs{font-weight:700}
+.gbar{border-bottom:1px solid var(--line-soft);gap:8px;padding:0 10px}
+.gbar b{font-weight:700}
+.gbar .b,.tctl .b,.btn{border-radius:7px;border:1px solid var(--line);background:var(--chrome-raised);font-weight:600;transition:border-color .12s,background .12s}
+.gbar .b:hover,.tctl .b:hover,.btn:hover{border-color:color-mix(in srgb,var(--sel) 55%,var(--line));filter:none}
+.btn.primary,.gbar .b.on,.tctl .b.on{background:var(--sel);border-color:var(--sel);color:var(--sel-ink)}
+.btn.primary:hover{filter:brightness(1.07)}
+.tctl .b.keyb{background:var(--key);border-color:var(--key)}
+.phead{background:transparent;border-bottom:1px solid var(--line-soft);padding:9px 12px;font-weight:700;font-size:12.5px}
+.outliner{background:transparent;padding:4px 6px}
+.row{border-radius:7px;padding:4px 8px;margin:1px 0}
+.row.sel{background:var(--sel-soft);color:var(--text);box-shadow:inset 3px 0 0 var(--sel)}
+.row.sel2{background:color-mix(in srgb,var(--sel) 9%,transparent)}
+.ae{padding:10px 12px 16px}
+.ae-sec{padding:10px 0;margin:0;border-bottom:1px solid var(--line-soft)}
+.ae-sec h4{font-size:11.5px;font-weight:700;color:var(--text-dim);margin-bottom:8px}
+input[type=text],input[type=number],input[type=password],select,.f select,.gbar select,.tctl select,.dir select{height:28px;border-radius:7px;border:1px solid var(--line);background:var(--field);padding:0 8px;transition:border-color .12s,box-shadow .12s}
+input[type=text]:focus,input[type=number]:focus,input[type=password]:focus,select:focus,textarea:focus{outline:none;border-color:var(--sel);box-shadow:0 0 0 3px var(--sel-soft)}
+input[type=color]{height:28px;border-radius:7px;border:1px solid var(--line);padding:2px}
+input.keyed{background:var(--key);border-color:var(--key)}
+.timeline{grid-template-rows:minmax(0,1fr) 40px}
+.tctl{border-top:1px solid var(--line-soft);gap:5px}
+.tctl .b{height:28px}
+.help{background:transparent;font-size:11.5px;padding:0 6px}
+dialog{border-radius:16px;border:1px solid var(--line);background:var(--chrome);box-shadow:0 30px 80px rgba(0,0,0,.55)}
+dialog::backdrop{background:rgba(5,6,8,.55);backdrop-filter:blur(4px)}
+.dlg-h{background:transparent;border-bottom:1px solid var(--line-soft);padding:14px 18px;font-size:15px;font-weight:700}
+.dlg-b{padding:14px 18px}
+.dlg-f{padding:4px 18px 16px}
+.btn{height:32px;padding:0 14px}
+.script,.vlist,.preview,.dir textarea,.dlg-b textarea{border-radius:10px;border-color:var(--line);background:var(--field)}
+.chip{border-radius:20px;background:var(--chrome-raised);font-weight:600}
+.note{border-radius:0 8px 8px 0}
+.tabs2 button{font-weight:600;border-radius:7px 7px 0 0}
+.tabs2 button.on{color:var(--sel);box-shadow:inset 0 -2px 0 var(--sel);background:transparent}
+.lib .it{border-radius:8px}
+@media (max-width:760px){ #app{grid-template-rows:42px 86px 46px minmax(0,1fr) 88px;padding:0 4px 4px} }
 </style>
 </head>
 <body>
@@ -329,6 +418,7 @@ input[type=password]{width:100%;min-width:0;height:24px;padding:0 5px;border:1px
       <button data-cmd="furView" data-arg="light">Fur: light (faster viewport)</button>
       <button data-cmd="furView" data-arg="off">Fur: hidden in viewport</button>
       <button data-cmd="grid">Toggle grid</button>
+      <button data-cmd="lookView" id="lookBtn" class="on">Production viewport (AO, bloom, grade)</button>
       <button data-cmd="smoothPlay" id="smoothBtn" class="on">Smooth playback (in-between frames)</button>
       <button data-cmd="fluid" id="fluidBtn" class="on">Natural motion (follow-through, eye contact)</button>
       <hr>
@@ -538,15 +628,29 @@ input[type=password]{width:100%;min-width:0;height:24px;padding:0 5px;border:1px
 <script src="vendor/OBJExporter.js"></script>
 <script src="vendor/GLTFLoader.js"></script>
 <script src="vendor/RoomEnvironment.js"></script>
+<script src="vendor/SimplexNoise.js"></script>
+<script src="vendor/CopyShader.js"></script>
+<script src="vendor/SSAOShader.js"></script>
+<script src="vendor/LuminosityHighPassShader.js"></script>
+<script src="vendor/BokehShader.js"></script>
+<script src="vendor/FXAAShader.js"></script>
+<script src="vendor/Pass.js"></script>
+<script src="vendor/EffectComposer.js"></script>
+<script src="vendor/RenderPass.js"></script>
+<script src="vendor/ShaderPass.js"></script>
+<script src="vendor/MaskPass.js"></script>
+<script src="vendor/SSAOPass.js"></script>
+<script src="vendor/UnrealBloomPass.js"></script>
+<script src="vendor/BokehPass.js"></script>
 <script>
 (function(){
 'use strict';
-const APP_VERSION = '0.5.0';
-const BUILD_ID = '20261001-234156-0182';
+const APP_VERSION = '0.6.0';
+const BUILD_ID = '20261002-050428-5060';
 const $ = s => document.querySelector(s);
 const DEG = Math.PI/180;
 
-try{ const t = localStorage.getItem('mayatoon.theme'); if(t) document.documentElement.dataset.theme = t; }catch(e){}
+try{ document.documentElement.dataset.theme = localStorage.getItem('mayatoon.theme') || 'dark'; }catch(e){}
 $('#verTag').textContent = APP_VERSION.startsWith('__') ? '' : 'v' + APP_VERSION;
 
 /* ---------- icons & types ---------- */
@@ -680,13 +784,14 @@ orbit.target.set(0, .6, 0); orbit.update();
 const hemi = new THREE.HemisphereLight(0xdfe8f2, 0x5a5048, 0.45); scene.add(hemi);
 const keyLight = new THREE.DirectionalLight(0xffffff, 0.95);
 keyLight.position.set(6, 10, 5); keyLight.castShadow = true;
-keyLight.shadow.mapSize.set(2048, 2048);
-Object.assign(keyLight.shadow.camera, {left:-12, right:12, top:12, bottom:-12, near:1, far:40});
-keyLight.shadow.bias = -0.0006;
+keyLight.shadow.mapSize.set(4096, 4096); keyLight.shadow.normalBias = .02;
+Object.assign(keyLight.shadow.camera, {left:-14, right:14, top:14, bottom:-14, near:1, far:44});
+keyLight.shadow.bias = -0.0003;
 scene.add(keyLight);
 const fillLight = new THREE.DirectionalLight(0xa9bcff, 0.3); fillLight.position.set(-6,4,-5); scene.add(fillLight);
+const rimLight = new THREE.DirectionalLight(0xfff0dc, 0.4); rimLight.position.set(-5, 4, -9); scene.add(rimLight);
 
-const grid = new THREE.GridHelper(20, 20, 0x23272c, 0x4c545c);
+const grid = new THREE.GridHelper(20, 20, 0x8a6a3a, 0x3a414a);
 grid.material.transparent = true; grid.material.opacity = .85;
 scene.add(grid);
 const catcher = new THREE.Mesh(new THREE.PlaneGeometry(40,40), new THREE.ShadowMaterial({opacity:.22}));
@@ -709,7 +814,7 @@ const axScene = new THREE.Scene();
 const axCam = new THREE.OrthographicCamera(-1.6,1.6,1.6,-1.6,0.1,10);
 function axisLabel(txt, color){
   const c = document.createElement('canvas'); c.width=c.height=64;
-  const x = c.getContext('2d'); x.fillStyle=color; x.font='600 44px Barlow, sans-serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(txt,32,34);
+  const x = c.getContext('2d'); x.fillStyle=color; x.font='600 44px Manrope, sans-serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(txt,32,34);
   const s = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c), depthTest:false}));
   s.scale.set(.55,.55,1); return s;
 }
@@ -1331,7 +1436,7 @@ function drawTimeline(){
   const lab = [1,2,5,10,20,25,50,100,200,500,1000].find(s => s*ppf >= 42) || 1000;
   const tick = css('--tl-tick');
   tctx.strokeStyle = tick; tctx.fillStyle = tick; tctx.lineWidth = 1;
-  tctx.font = '11px Barlow, system-ui, sans-serif'; tctx.textAlign = 'center';
+  tctx.font = '11px Manrope, system-ui, sans-serif'; tctx.textAlign = 'center';
   tctx.beginPath();
   for(let f = start; f <= end; f++){
     const x = Math.round(fx(f,w)) + .5, major = (f % lab === 0) || f === start;
@@ -1349,7 +1454,7 @@ function drawTimeline(){
   tctx.fillStyle = css('--sel'); tctx.globalAlpha = .9;
   tctx.fillRect(cx - Math.max(1.5, ppf*.5), 0, Math.max(3, ppf), h);
   tctx.globalAlpha = 1;
-  const label = String(frame); tctx.font = '600 12px Barlow, system-ui, sans-serif';
+  const label = String(frame); tctx.font = '600 12px Manrope, system-ui, sans-serif';
   const tw = tctx.measureText(label).width + 10, lx = Math.min(w - tw - 2, Math.max(2, cx + 4));
   tctx.fillStyle = css('--sel'); tctx.fillRect(lx, 4, tw, 17);
   tctx.fillStyle = css('--sel-ink'); tctx.textAlign = 'left'; tctx.fillText(label, lx + 5, 17);
@@ -1435,7 +1540,7 @@ function drawGraph(){
   const sz = fitCanvas(gcv, gctx); if(!sz) return;
   const [w,h] = sz, o = primary();
   gctx.clearRect(0,0,w,h);
-  gctx.font = '11px Barlow, system-ui, sans-serif';
+  gctx.font = '11px Manrope, system-ui, sans-serif';
   const fs = o ? keyFrames(o) : [];
   document.querySelectorAll('[data-cmd="interp"]').forEach(b => b.classList.toggle('on', !!o && o.interp === b.dataset.arg));
   syncKeyFields(o);
@@ -1666,15 +1771,26 @@ function capsuleGeo(r, len, seg=18){
 const centeredCapsule = (r, len, seg) => capsuleGeo(r, len, seg).translate(0, (len + 2*r)/2, 0);
 
 /* ----- environment: sky, ground, image-based light ----- */
-const ENV0 = {sky:true, top:'#7fb1e3', horizon:'#e3edf2', ground:'#7ea65e', groundOn:true, sunEl:50, sunAz:35, sun:1.15, amb:.32, filmic:true};
+const ENV0 = {sky:true, top:'#7fb1e3', horizon:'#e3edf2', ground:'#7ea65e', groundOn:true, sunEl:50, sunAz:35, sun:1.15, amb:.32, filmic:true, haze:true};
 let env = Object.assign({}, ENV0);
 const skyMat = new THREE.ShaderMaterial({side:THREE.BackSide, depthWrite:false,
-  uniforms:{top:{value:new THREE.Color()}, hor:{value:new THREE.Color()}, gnd:{value:new THREE.Color()}},
+  uniforms:{top:{value:new THREE.Color()}, hor:{value:new THREE.Color()}, gnd:{value:new THREE.Color()}, sunDir:{value:new THREE.Vector3(0,1,0)}, sunCol:{value:new THREE.Color(1,1,1)}, sunAmt:{value:1}},
   vertexShader:'varying vec3 vp; void main(){ vp = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-  fragmentShader:'uniform vec3 top; uniform vec3 hor; uniform vec3 gnd; varying vec3 vp; void main(){ float h = vp.y; vec3 c = h > 0.0 ? mix(hor, top, pow(clamp(h, 0.0, 1.0), 0.55)) : mix(hor, gnd, clamp(-h * 5.0, 0.0, 1.0)); gl_FragColor = linearToOutputTexel(vec4(c, 1.0)); }'});
+  fragmentShader:'uniform vec3 top; uniform vec3 hor; uniform vec3 gnd; uniform vec3 sunDir; uniform vec3 sunCol; uniform float sunAmt; varying vec3 vp; void main(){ vec3 d = normalize(vp); float h = d.y; vec3 c = h > 0.0 ? mix(hor, top, pow(clamp(h, 0.0, 1.0), 0.5)) : mix(hor, gnd, clamp(-h * 5.0, 0.0, 1.0)); float s = max(dot(d, sunDir), 0.0); c += sunCol * sunAmt * (pow(s, 1400.0) * 6.0 + pow(s, 60.0) * 0.35 + pow(s, 6.0) * 0.12) * step(-0.02, h); c = mix(c, hor * 1.04, (1.0 - smoothstep(0.0, 0.16, abs(h))) * 0.35); c += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) / 255.0; gl_FragColor = linearToOutputTexel(vec4(c, 1.0)); }'});
 const sky = new THREE.Mesh(new THREE.SphereGeometry(280, 32, 16), skyMat);
 sky.frustumCulled = false; sky.renderOrder = -10; sky.userData.envPart = true; scene.add(sky);
-const groundMesh = new THREE.Mesh(new THREE.CircleGeometry(70, 72), STD('#8dbb6a', .95));
+function groundTex(){
+  const c = document.createElement('canvas'); c.width = c.height = 512; const x = c.getContext('2d'), im = x.createImageData(512, 512), d = im.data;
+  const n2 = (i, j) => { const v = Math.sin(i*127.1 + j*311.7)*43758.5453; return v - Math.floor(v); };
+  const vn = (u, v, s) => { const i = Math.floor(u/s), j = Math.floor(v/s), fu = u/s - i, fv = v/s - j, a = n2(i % (512/s), j % (512/s)), b = n2((i + 1) % (512/s), j % (512/s)), c2 = n2(i % (512/s), (j + 1) % (512/s)), e = n2((i + 1) % (512/s), (j + 1) % (512/s)), su = fu*fu*(3 - 2*fu), sv = fv*fv*(3 - 2*fv); return a + (b - a)*su + (c2 - a)*sv + (a - b - c2 + e)*su*sv; };
+  for(let j = 0; j < 512; j++) for(let i = 0; i < 512; i++){
+    const v = .5*vn(i, j, 64) + .3*vn(i, j, 16) + .2*vn(i, j, 4), g = n2(i*.73, j*1.37) > .92 ? .12 : 0;
+    const k = .78 + .3*v + g, o = (j*512 + i)*4; d[o] = 255*Math.min(1, k*.98); d[o + 1] = 255*Math.min(1, k); d[o + 2] = 255*Math.min(1, k*.94); d[o + 3] = 255; }
+  x.putImageData(im, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(26, 26); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; return t;
+}
+const groundMesh = new THREE.Mesh(new THREE.CircleGeometry(70, 96), STD('#8dbb6a', .95));
+groundMesh.material.map = groundTex();
 groundMesh.rotation.x = -Math.PI/2; groundMesh.position.y = -0.003; groundMesh.receiveShadow = true; groundMesh.userData.envPart = true;
 scene.add(groundMesh);
 const pmrem = new THREE.PMREMGenerator(renderer);
@@ -1688,9 +1804,86 @@ function applyEnv(){
   catcher.visible = !env.groundOn;
   const el = env.sunEl*DEG, az = env.sunAz*DEG;
   keyLight.position.set(cos(el)*sin(az)*14, sin(el)*14, cos(el)*cos(az)*14);
+  const night = env.sun < .55, warm = 1 - smooth(env.sunEl/45);
+  const sunC = new THREE.Color(night ? '#a9bcff' : '#fff6ea').lerp(new THREE.Color('#ffb168'), night ? 0 : warm*.85);
+  keyLight.color.copy(sunC);
+  skyMat.uniforms.sunDir.value.copy(keyLight.position).normalize(); skyMat.uniforms.sunCol.value.copy(sunC).convertSRGBToLinear(); skyMat.uniforms.sunAmt.value = night ? .25 : 1;
+  rimLight.position.set(-sin(az)*9, 5, -cos(az)*9); rimLight.color.set(night ? '#7f97ff' : '#fff1de').lerp(new THREE.Color(env.horizon), .3); rimLight.intensity = (night ? .5 : .42)*(env.filmic ? 1 : .7);
+  hemi.color.set(env.top).lerp(new THREE.Color('#ffffff'), .45); hemi.groundColor.set(env.ground).multiplyScalar(.7);
+  if(env.haze !== false && env.sky){ if(!scene.fog) scene.fog = new THREE.Fog(0xffffff, 30, 170); scene.fog.color.set(env.horizon).convertSRGBToLinear(); } else scene.fog = null;
   keyLight.intensity = env.sun*(env.filmic ? 1.25 : 1); hemi.intensity = env.amb*(env.filmic ? 1.3 : 1);
   const tm = env.filmic ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping; if(renderer.toneMapping !== tm){ renderer.toneMapping = tm; scene.traverse(n => { if(n.material) (Array.isArray(n.material) ? n.material : [n.material]).forEach(m => m.needsUpdate = true); }); }
   viewEl.classList.toggle('skyon', !!env.sky);
+}
+
+/* ----- look-dev pipeline: SSAO, depth of field, bloom, grade, FXAA ----- */
+const GradeShader = {
+  uniforms:{tDiffuse:{value:null}, vignette:{value:.28}, sat:{value:1.07}, contrast:{value:1.05}, warmth:{value:.012}, grain:{value:.018}, time:{value:0}},
+  vertexShader:'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader:`uniform sampler2D tDiffuse; uniform float vignette, sat, contrast, warmth, grain, time; varying vec2 vUv;
+    vec3 toS(vec3 c){ c = max(c, 0.0); return mix(pow(c, vec3(1.0/2.4))*1.055 - 0.055, c*12.92, vec3(lessThanEqual(c, vec3(0.0031308)))); }
+    void main(){ vec3 c = toS(texture2D(tDiffuse, vUv).rgb);
+      float l = dot(c, vec3(.2126, .7152, .0722)); c = mix(vec3(l), c, sat); c = (c - .5)*contrast + .5; c += vec3(warmth, warmth*.35, -warmth);
+      vec2 d = (vUv - .5)*vec2(1.0, .82); c *= 1.0 - vignette*smoothstep(.32, .9, length(d)*1.45);
+      c += (fract(sin(dot(vUv*vec2(1733.0, 977.0) + time, vec2(12.9898, 78.233)))*43758.5453) - .5)*grain;
+      gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0); }`
+};
+let lookView = 'prod';
+function makeLook(w, h, pr, offscreen){
+  const rtOpt = {minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter, format:THREE.RGBAFormat, type:THREE.HalfFloatType};
+  const composer = new THREE.EffectComposer(renderer, new THREE.WebGLRenderTarget(Math.max(1, w*pr), Math.max(1, h*pr), rtOpt));
+  composer.setPixelRatio(pr); composer.setSize(w, h);
+  const ssao = new THREE.SSAOPass(scene, camera, w*pr, h*pr);
+  if(ssao.normalRenderTarget.depthTexture) ssao.normalRenderTarget.depthTexture.type = THREE.UnsignedIntType;
+  ssao.kernelRadius = .42; ssao.minDistance = .00004; ssao.maxDistance = .0028;
+  const bokeh = new THREE.BokehPass(scene, camera, {focus:6, aperture:.0016, maxblur:.0065, width:w*pr, height:h*pr}); bokeh.needsSwap = true; bokeh.enabled = false;
+  const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(w*pr, h*pr), .2, .55, .965);
+  const grade = new THREE.ShaderPass(GradeShader);
+  const fxaa = new THREE.ShaderPass(THREE.FXAAShader); fxaa.uniforms.resolution.value.set(1/(w*pr), 1/(h*pr));
+  [ssao, bokeh, bloom, grade, fxaa].forEach(p => composer.addPass(p));
+  fxaa.renderToScreen = !offscreen;
+  return {composer, ssao, bokeh, bloom, grade, fxaa, w, h, pr};
+}
+function lookCam(L, cam){
+  const S = L.ssao;
+  if(S.camera !== cam || S._pm !== cam.projectionMatrix.elements.join()){
+    S.camera = cam; S._pm = cam.projectionMatrix.elements.join();
+    const u = S.ssaoMaterial.uniforms; u.cameraNear.value = cam.near; u.cameraFar.value = cam.far; u.cameraProjectionMatrix.value.copy(cam.projectionMatrix); u.cameraInverseProjectionMatrix.value.copy(cam.projectionMatrixInverse);
+    S.depthRenderMaterial.uniforms.cameraNear.value = cam.near; S.depthRenderMaterial.uniforms.cameraFar.value = cam.far;
+  }
+  L.bokeh.camera = cam; L.bokeh.uniforms.aspect.value = cam.aspect;
+}
+function focusFor(cam){
+  const cp = new THREE.Vector3(); cam.getWorldPosition(cp);
+  const co = objects.find(o => o.camera === cam);
+  const tgt = co && co.cam.aim != null ? byId(co.cam.aim) : null, p = new THREE.Vector3();
+  if(tgt && tgt.rig && tgt.rig.root){ tgt.rig.root.getWorldPosition(p); p.y += .8*((tgt.char && tgt.char.size) || 1); return cp.distanceTo(p); }
+  const fw = new THREE.Vector3(); cam.getWorldDirection(fw); let best = null;
+  for(const o of objects) if(o.type === 'character' && isShown(o) && o.rig){ o.rig.root.getWorldPosition(p); const v = p.clone().sub(cp), z = v.dot(fw); if(z > .5 && v.normalize().dot(fw) > .82 && (best == null || z < best)) best = z; }
+  return best || 8;
+}
+let lookV = null, lookR = null, copyQuad = null, rt8 = null;
+function renderLookScreen(cam, x, y, w, h, dof){
+  const pr = Math.min(renderer.getPixelRatio(), 1.5);
+  if(!lookV || lookV.w !== w || lookV.h !== h){ if(lookV) lookV.composer.renderTarget1.dispose(); lookV = makeLook(w, h, pr, false); }
+  lookCam(lookV, cam); lookV.bokeh.enabled = !!dof; if(dof) lookV.bokeh.uniforms.focus.value = focusFor(cam);
+  lookV.grade.uniforms.time.value = 0; lookV.grade.uniforms.grain.value = .012;
+  const cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha();
+  renderer.setClearColor(env.sky ? 0x000000 : new THREE.Color(rset.bg).convertSRGBToLinear(), 1);
+  renderer.setViewport(x, y, w, h); renderer.setScissor(x, y, w, h); renderer.setScissorTest(true);
+  lookV.composer.render();
+  renderer.setScissorTest(false); renderer.setClearColor(cc, ca);
+}
+function renderLookTarget(cam, W, H, f){
+  if(!lookR || lookR.w !== W || lookR.h !== H){ lookR = makeLook(W, H, 1, true); if(rt8) rt8.dispose(); rt8 = new THREE.WebGLRenderTarget(W, H); }
+  if(!copyQuad) copyQuad = new THREE.FullScreenQuad(new THREE.ShaderMaterial(THREE.CopyShader));
+  lookCam(lookR, cam); lookR.bokeh.enabled = movie.dof !== false; lookR.bokeh.uniforms.focus.value = focusFor(cam);
+  lookR.grade.uniforms.time.value = (f % 97)*.13; lookR.grade.uniforms.grain.value = .02;
+  renderer.setClearColor(env.sky ? 0x000000 : new THREE.Color(rset.bg).convertSRGBToLinear(), 1);
+  lookR.composer.render();
+  copyQuad.material.uniforms.tDiffuse.value = lookR.composer.readBuffer.texture;
+  renderer.setRenderTarget(rt8); renderer.clear(); copyQuad.render(renderer); renderer.setRenderTarget(null);
+  return rt8;
 }
 
 /* ----- characters ----- */
@@ -2621,7 +2814,7 @@ function drawStory(){
   const sz = fitCanvas(scv, sctx); if(!sz) return;
   const [w, h] = sz, tracks = storyTracks();
   sctx.clearRect(0, 0, w, h);
-  sctx.font = '12px Barlow, system-ui, sans-serif'; sctx.textBaseline = 'middle';
+  sctx.font = '12px Manrope, system-ui, sans-serif'; sctx.textBaseline = 'middle';
   const dim = css('--text-dim'), txt = css('--text'), grd = css('--graph-grid');
   // ruler
   sctx.fillStyle = css('--chrome-deep'); sctx.fillRect(0, 0, w, SR);
@@ -3436,10 +3629,11 @@ function envDialog(){
     <span>Sun strength</span><div class="rng"><input type="range" id="eSun" min="0" max="2.5" step=".05" value="${env.sun}"><output>${env.sun}</output></div>
     <span>Fill light</span><div class="rng"><input type="range" id="eAmb" min="0" max="1.5" step=".05" value="${env.amb}"><output>${env.amb}</output></div>
     <span>Look</span><label class="pair"><input type="checkbox" id="eFilm" ${env.filmic?'checked':''}> Filmic tone (softer highlights, richer color)</label>
+    <span>Haze</span><label class="pair"><input type="checkbox" id="eHaze" ${env.haze !== false?'checked':''}> Aerial haze on distant hills and mountains</label>
     <span>Presets</span><div class="pair"><button class="btn" data-env="day">Day</button><button class="btn" data-env="golden">Golden hour</button><button class="btn" data-env="night">Night</button></div>
   </div>`, buttons:[]});
   const read = () => { env.sky = $('#eSky').checked; env.top = $('#eTop').value; env.horizon = $('#eHor').value; env.groundOn = $('#eGOn').checked; env.ground = $('#eGround').value;
-    env.sunEl = +$('#eEl').value; env.sunAz = +$('#eAz').value; env.sun = +$('#eSun').value; env.amb = +$('#eAmb').value; env.filmic = $('#eFilm').checked;
+    env.sunEl = +$('#eEl').value; env.sunAz = +$('#eAz').value; env.sun = +$('#eSun').value; env.amb = +$('#eAmb').value; env.filmic = $('#eFilm').checked; env.haze = $('#eHaze').checked;
     document.querySelectorAll('#dlgBody .rng').forEach(r => { const i = r.querySelector('input'); r.querySelector('output').textContent = i.id === 'eEl' || i.id === 'eAz' ? i.value + '°' : i.value; });
     applyEnv(); };
   $('#dlgBody').addEventListener('input', read); $('#dlgBody').addEventListener('change', () => { read(); commit(); });
@@ -3451,7 +3645,7 @@ function envDialog(){
 /* ----- rendering ----- */
 let rt = null, bigCv = null, compCv = null;
 const rset = {bg:'#3d434a', grid:false};
-const movie = {preset:'16:9', ss:1.5, subs:true, subLang:'native', mb:3, title:true};
+const movie = {preset:'16:9', ss:1.5, subs:true, subLang:'native', mb:3, title:true, look:'prod', dof:true};
 const PRESETS = {'16:9':[1920,1080,'Landscape 1920 × 1080'], '9:16':[1080,1920,'Vertical 1080 × 1920 (Reels, TikTok, Shorts)'], '1:1':[1080,1080,'Square 1080 × 1080'], '720p':[1280,720,'Draft 1280 × 720']};
 function renderCam(f){ const c = filmCamera(f); return c ? c.camera : camera; }
 function renderFrame(f, w, h, ss, mbOverride){
@@ -3470,10 +3664,14 @@ function renderFrame(f, w, h, ss, mbOverride){
     if(N > 1) evalAll(f + ((i + .5)/N - .5)*.5);
     const cam = renderCam(f), oldAspect = cam.aspect;
     cam.aspect = w/h; cam.updateProjectionMatrix();
-    renderer.setRenderTarget(rt); renderer.setScissorTest(false);
-    renderer.setClearColor(new THREE.Color(rset.bg), 1); renderer.clear();
-    renderer.render(scene, cam);
-    renderer.readRenderTargetPixels(rt, 0, 0, W, H, buf);
+    renderer.setScissorTest(false);
+    if(movie.look !== 'plain'){ renderer.readRenderTargetPixels(renderLookTarget(cam, W, H, f), 0, 0, W, H, buf); }
+    else {
+      renderer.setRenderTarget(rt);
+      renderer.setClearColor(new THREE.Color(rset.bg), 1); renderer.clear();
+      renderer.render(scene, cam);
+      renderer.readRenderTargetPixels(rt, 0, 0, W, H, buf);
+    }
     cam.aspect = oldAspect; cam.updateProjectionMatrix();
     if(acc) for(let j = 0; j < buf.length; j++) acc[j] += buf[j];
   }
@@ -3501,15 +3699,15 @@ function drawTitle(cx, w, h, f){
   const a = titleAlpha(f); if(a <= 0) return;
   const fs = Math.round(Math.min(w, h)*.075), m = story.meta;
   cx.save(); cx.globalAlpha = a; cx.textAlign = 'center'; cx.fillStyle = '#fff'; cx.shadowColor = 'rgba(0,0,0,.6)'; cx.shadowBlur = fs*.35;
-  cx.font = `600 ${fs}px Barlow, "Noto Sans", "Kohinoor Devanagari", "Devanagari Sangam MN", "Tamil Sangam MN", "Telugu Sangam MN", sans-serif`;
+  cx.font = `600 ${fs}px Manrope, "Noto Sans", "Kohinoor Devanagari", "Devanagari Sangam MN", "Tamil Sangam MN", "Telugu Sangam MN", sans-serif`;
   cx.fillText(m.title, w/2, h*.3);
-  if(m.title_en && m.title_en !== m.title){ cx.font = `500 ${Math.round(fs*.42)}px Barlow, sans-serif`; cx.globalAlpha = a*.85; cx.fillText(m.title_en, w/2, h*.3 + fs*.8); }
+  if(m.title_en && m.title_en !== m.title){ cx.font = `500 ${Math.round(fs*.42)}px Manrope, sans-serif`; cx.globalAlpha = a*.85; cx.fillText(m.title_en, w/2, h*.3 + fs*.8); }
   cx.restore();
 }
 function drawSubs(cx, w, h){
   const subs = subtitlesAt(); if(!subs.length) return;
   const fs = Math.round(Math.min(w, h)*.05);
-  cx.font = `600 ${fs}px Barlow, "Segoe UI", "Noto Sans", "Kohinoor Devanagari", "Devanagari Sangam MN", "Tamil Sangam MN", "Telugu Sangam MN", sans-serif`; cx.textAlign = 'center'; cx.textBaseline = 'alphabetic';
+  cx.font = `600 ${fs}px Manrope, "Segoe UI", "Noto Sans", "Kohinoor Devanagari", "Devanagari Sangam MN", "Tamil Sangam MN", "Telugu Sangam MN", sans-serif`; cx.textAlign = 'center'; cx.textBaseline = 'alphabetic';
   cx.lineJoin = 'round'; cx.lineWidth = Math.max(3, fs*.16); cx.strokeStyle = 'rgba(0,0,0,.85)'; cx.fillStyle = '#ffffff';
   let y = h - Math.round(h*.06);
   const all = subs.flatMap(s => s.say.split('\n').flatMap(l => wrapText(cx, l, w*.86))).reverse();
@@ -3525,6 +3723,8 @@ function renderDialog(){
       <span>Format</span><select id="rPreset">${opts}</select>
       <span>Quality</span><select id="rSS"><option value="1">Draft (fast)</option><option value="1.5">High</option><option value="2">Best (slow)</option></select>
       <span>Subtitles</span><select id="rSubs"><option value="off">Off</option><option value="native">Dialogue language</option><option value="en">English</option><option value="both">Both (dialogue, then English)</option></select>
+      <span>Look</span><select id="rLook"><option value="prod">Production (ambient occlusion, bloom, grade)</option><option value="plain">Plain</option></select>
+      <span>Depth of field</span><label class="pair"><input type="checkbox" id="rDof" ${movie.dof !== false ? 'checked' : ''}> Focus on the speaker, soften the background</label>
       <span>Motion blur</span><select id="rMB"><option value="1">Off</option><option value="3">Light</option><option value="5">Film (slower)</option></select>
       <span>Title card</span><label class="pair"><input type="checkbox" id="rTitle" ${movie.title?'checked':''}> Story title over the first 3 seconds</label>
       <span>Background</span><label class="pair"><input type="color" id="rBg" value="${rset.bg}" style="width:120px"> <span class="hint">used when the sky is off</span></label>
@@ -3535,11 +3735,11 @@ function renderDialog(){
     <div class="preview" id="rPrev"><div class="ph">${mp4 ? 'Render movie makes a finished MP4 with sound, frame by frame, on your Mac.' : server ? 'MP4 export needs ffmpeg on the studio Mac (the installer adds it with Homebrew). Playblast records WebM in real time.' : 'MP4 export runs in the local studio build. Here you can render stills and real-time WebM playblasts.'}</div></div>
     <div class="prog" id="rProg" hidden><i></i></div>`,
     buttons:[{label:'Render frame', onClick:renderStill}, {label:'Playblast (WebM)', onClick:playblast}].concat(mp4 ? [{label:'Render movie (MP4)', primary:true, onClick:renderMovie}] : [])});
-  $('#rSS').value = String(movie.ss); $('#rSubs').value = movie.subs === false ? 'off' : (movie.subLang || 'native'); $('#rMB').value = String(movie.mb || 1);
+  $('#rSS').value = String(movie.ss); $('#rSubs').value = movie.subs === false ? 'off' : (movie.subLang || 'native'); $('#rMB').value = String(movie.mb || 1); $('#rLook').value = movie.look || 'prod';
 }
 function readRenderForm(){
   if(!$('#rPreset')) return;
-  movie.preset = $('#rPreset').value; movie.ss = +$('#rSS').value; const sl = $('#rSubs').value; movie.subs = sl !== 'off'; if(sl !== 'off') movie.subLang = sl; movie.mb = +$('#rMB').value; movie.title = $('#rTitle').checked; rset.bg = $('#rBg').value; rset.grid = $('#rGrid').checked;
+  movie.preset = $('#rPreset').value; movie.ss = +$('#rSS').value; const sl = $('#rSubs').value; movie.subs = sl !== 'off'; if(sl !== 'off') movie.subLang = sl; movie.mb = +$('#rMB').value; movie.look = $('#rLook').value; movie.dof = $('#rDof').checked; movie.title = $('#rTitle').checked; rset.bg = $('#rBg').value; rset.grid = $('#rGrid').checked;
 }
 function renderStill(){
   readRenderForm();
@@ -3648,9 +3848,9 @@ function renderFilmView(w, h){
   renderer.setClearColor(0x000000, 0);
   const cam = co.camera; cam.aspect = A; cam.updateProjectionMatrix();
   const restore = hideHelpers(); grid.visible = false;
-  renderer.render(scene, cam);
+  if(lookView === 'prod' && !wire) renderLookScreen(cam, gx, gy, gw, gh, true); else renderer.render(scene, cam);
   restore();
-  renderer.setScissorTest(false);
+  renderer.setScissorTest(false); renderer.setViewport(0, 0, w, h);
   const s = shotAt(frame);
   $('#camName').textContent = `film: ${co.name}${s ? '' : ' (no shot here)'}`;
   const sb = $('#subs'), subs = subtitlesAt();
@@ -3853,6 +4053,7 @@ function run(cmd, arg){
     case 'autoCut': autoCut(); applyFrame(); commit(); drawStory(); toggleBottom('story', true); setFilm(true); toast('Cameras placed and cut'); break;
     case 'voiceAll': voiceClips(story.clips.filter(staleVoice), 'Voicing line'); break;
     case 'smoothPlay': smoothPlay = !smoothPlay; $('#smoothBtn').classList.toggle('on', smoothPlay); toast(smoothPlay ? 'Smooth playback on' : 'Playback steps frame by frame'); break;
+    case 'lookView': lookView = lookView === 'prod' ? 'fast' : 'prod'; $('#lookBtn').classList.toggle('on', lookView === 'prod'); toast(lookView === 'prod' ? 'Production viewport' : 'Fast viewport'); break;
     case 'fluid': fluid = !fluid; $('#fluidBtn').classList.toggle('on', fluid); applyFrame(); toast(fluid ? 'Natural motion on' : 'Natural motion off'); break;
     case 'gfit': gNeedsFit = true; drawGraph(); break;
     case 'interp': setInterp(arg); break;
@@ -3950,7 +4151,8 @@ function loop(){
   const w = viewEl.clientWidth, h = viewEl.clientHeight;
   if(filmMode){ if(renderFilmView(w, h)) return; if($('#camName').textContent !== 'film: no camera yet') $('#camName').textContent = 'film: no camera yet'; }
   renderer.setScissorTest(false); renderer.setViewport(0,0,w,h); renderer.clear();
-  renderer.render(scene, camera);
+  if(lookView === 'prod' && !wire) renderLookScreen(camera, 0, 0, w, h, false); else renderer.render(scene, camera);
+  renderer.setViewport(0, 0, w, h);
   axCam.position.copy(camera.position).sub(orbit.target).normalize().multiplyScalar(4);
   axCam.up.copy(camera.up); axCam.lookAt(0,0,0);
   const s = 74; renderer.setScissorTest(true); renderer.setScissor(8, 8, s, s); renderer.setViewport(8, 8, s, s);
