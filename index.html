@@ -6,7 +6,7 @@
 <title>MayaToon Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 :root{
   --chrome:#c4c8cd; --chrome-deep:#b2b7bd; --chrome-raised:#d5d8dc; --line:#959ba2;
@@ -623,32 +623,39 @@ dialog::backdrop{background:rgba(5,6,8,.55);backdrop-filter:blur(4px)}
   <div class="dlg-f"><span class="msg" id="dlgMsg"></span><div id="dlgBtns"></div></div>
 </dialog>
 
-<script src="vendor/three.min.js"></script>
-<script src="vendor/OrbitControls.js"></script>
-<script src="vendor/TransformControls.js"></script>
-<script src="vendor/GLTFExporter.js"></script>
-<script src="vendor/OBJExporter.js"></script>
-<script src="vendor/GLTFLoader.js"></script>
-<script src="vendor/RoomEnvironment.js"></script>
-<script src="vendor/SimplexNoise.js"></script>
-<script src="vendor/CopyShader.js"></script>
-<script src="vendor/SSAOShader.js"></script>
-<script src="vendor/LuminosityHighPassShader.js"></script>
-<script src="vendor/BokehShader.js"></script>
-<script src="vendor/FXAAShader.js"></script>
-<script src="vendor/Pass.js"></script>
-<script src="vendor/EffectComposer.js"></script>
-<script src="vendor/RenderPass.js"></script>
-<script src="vendor/ShaderPass.js"></script>
-<script src="vendor/MaskPass.js"></script>
-<script src="vendor/SSAOPass.js"></script>
-<script src="vendor/UnrealBloomPass.js"></script>
-<script src="vendor/BokehPass.js"></script>
-<script>
+<script type="importmap">{"imports":{"three":"./vendor/three/three.module.js","three/addons/":"./vendor/three/addons/","@pixiv/three-vrm":"./vendor/three-vrm/three-vrm.module.min.js"}}</script>
+<script type="module">
+import * as T from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import {TransformControls} from 'three/addons/controls/TransformControls.js';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
+import {OBJExporter} from 'three/addons/exporters/OBJExporter.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
+import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+import {ShaderPass} from 'three/addons/postprocessing/ShaderPass.js';
+import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+import {GTAOPass} from 'three/addons/postprocessing/GTAOPass.js';
+import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
+import {BokehPass} from 'three/addons/postprocessing/BokehPass.js';
+import {FullScreenQuad} from 'three/addons/postprocessing/Pass.js';
+import {FXAAShader} from 'three/addons/shaders/FXAAShader.js';
+import {CopyShader} from 'three/addons/shaders/CopyShader.js';
+// MayaToon keeps its colour maths explicit (as it was on r128); the renderer converts to sRGB on output
+T.ColorManagement.enabled = false;
+const THREE = Object.assign({}, T, {OrbitControls, TransformControls, GLTFLoader, GLTFExporter, OBJExporter, RoomEnvironment, EffectComposer, RenderPass, ShaderPass, OutputPass, GTAOPass, UnrealBloomPass, BokehPass, FullScreenQuad, FXAAShader, CopyShader});
+THREE.sRGBEncoding = 3001; THREE.LinearEncoding = 3000;
+Object.defineProperty(T.Texture.prototype, 'encoding', {configurable:true, get(){ return this.colorSpace === T.SRGBColorSpace ? 3001 : 3000; }, set(v){ this.colorSpace = v === 3001 ? T.SRGBColorSpace : T.NoColorSpace; }});
+THREE.WebGLMultisampleRenderTarget = class extends T.WebGLRenderTarget { constructor(w, h, o={}){ super(w, h, Object.assign({samples:4}, o)); } };
+THREE.LIGHT_K = Math.PI;
+window.THREE = THREE;
+</script>
+<script type="module">
 (function(){
 'use strict';
-const APP_VERSION = '0.9.0';
-const BUILD_ID = '20261002-174741-7148';
+const APP_VERSION = '0.10.0';
+const BUILD_ID = '20261002-230108-4786';
 const $ = s => document.querySelector(s);
 const DEG = Math.PI/180;
 
@@ -770,9 +777,9 @@ const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
 renderer.setClearColor(0x000000, 0);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-renderer.outputEncoding = THREE.sRGBEncoding;
-renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.12;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = .8;
 renderer.autoClear = false;
 viewEl.prepend(renderer.domElement);
 
@@ -786,11 +793,11 @@ orbit.target.set(0, .6, 0); orbit.update();
 const hemi = new THREE.HemisphereLight(0xdfe8f2, 0x5a5048, 0.45); scene.add(hemi);
 const keyLight = new THREE.DirectionalLight(0xffffff, 0.95);
 keyLight.position.set(6, 10, 5); keyLight.castShadow = true;
-keyLight.shadow.mapSize.set(4096, 4096); keyLight.shadow.normalBias = .02;
+keyLight.shadow.mapSize.set(4096, 4096); keyLight.shadow.normalBias = .02; keyLight.shadow.radius = 3; keyLight.shadow.blurSamples = 16;
 Object.assign(keyLight.shadow.camera, {left:-14, right:14, top:14, bottom:-14, near:1, far:44});
 keyLight.shadow.bias = -0.0003;
 scene.add(keyLight);
-const fillLight = new THREE.DirectionalLight(0xa9bcff, 0.3); fillLight.position.set(-6,4,-5); scene.add(fillLight);
+const fillLight = new THREE.DirectionalLight(0xa9bcff, 0.3*THREE.LIGHT_K); fillLight.position.set(-6,4,-5); scene.add(fillLight);
 const rimLight = new THREE.DirectionalLight(0xfff0dc, 0.4); rimLight.position.set(-5, 4, -9); scene.add(rimLight);
 
 const grid = new THREE.GridHelper(20, 20, 0x8a6a3a, 0x3a414a);
@@ -802,7 +809,7 @@ scene.add(catcher);
 
 const tc = new THREE.TransformControls(camera, renderer.domElement);
 tc.setSize(0.9);
-scene.add(tc);
+const tcH = tc.getHelper ? tc.getHelper() : tc; scene.add(tcH);
 let gizmoUsed = false, dragStart = null;
 tc.addEventListener('dragging-changed', e => {
   orbit.enabled = !e.value;
@@ -853,7 +860,7 @@ function makeObject(d){
   if(d.type === 'light'){
     const mat = new THREE.MeshBasicMaterial(); setMatColor(mat, d.color);
     mesh = new THREE.Mesh(new THREE.SphereGeometry(.13, 20, 10), mat);
-    const pl = new THREE.PointLight(0xffffff, d.intensity ?? 1.2, 0, 2);
+    const pl = new THREE.PointLight(0xffffff, (d.intensity ?? 1.2)*THREE.LIGHT_K, 0, 2);
     setMatColor(pl, d.color);
     mesh.add(pl); mesh.userData.isLight = true; mesh.userData.lightProxy = true;
   } else if(d.type === 'group'){
@@ -1419,7 +1426,7 @@ $('#fColor').addEventListener('input', e => matTargets().forEach(o => { o.color 
 $('#fRough').addEventListener('input', e => { matTargets().forEach(o => { o.rough = +e.target.value; o.mesh.material.roughness = o.rough; }); $('#oRough').textContent = (+e.target.value).toFixed(2); });
 $('#fMetal').addEventListener('input', e => { matTargets().forEach(o => { o.metal = +e.target.value; o.mesh.material.metalness = o.metal; }); $('#oMetal').textContent = (+e.target.value).toFixed(2); });
 $('#fLColor').addEventListener('input', e => { const o = primary(); if(!o) return; o.color = e.target.value; setMatColor(o.mesh.material, o.color); setMatColor(o.light, o.color); });
-$('#fInt').addEventListener('input', e => { const o = primary(); if(!o) return; o.intensity = +e.target.value; o.light.intensity = o.intensity; $('#oInt').textContent = o.intensity.toFixed(2); });
+$('#fInt').addEventListener('input', e => { const o = primary(); if(!o) return; o.intensity = +e.target.value; o.light.intensity = o.intensity*THREE.LIGHT_K; $('#oInt').textContent = o.intensity.toFixed(2); });
 ['#fColor','#fRough','#fMetal','#fLColor','#fInt'].forEach(s => $(s).addEventListener('change', commit));
 
 /* ---------- timeline ---------- */
@@ -1709,10 +1716,10 @@ const stamp = () => { const d = new Date(), z = n => String(n).padStart(2,'0'); 
 const baseName = () => (studioName || 'scene').replace(/[^\w-]+/g,'_');
 
 function withCleanScene(fn){
-  const st = {grid:grid.visible, tc:tc.visible};
-  clearOverlays(); tc.visible = false;
+  const st = {grid:grid.visible, tc:tcH.visible};
+  clearOverlays(); tcH.visible = false;
   try{ return fn(); }
-  finally{ tc.visible = st.tc; grid.visible = st.grid; sel.forEach(o => addOverlay(o, o === primary() ? selMat : selMat2)); }
+  finally{ tcH.visible = st.tc; grid.visible = st.grid; sel.forEach(o => addOverlay(o, o === primary() ? selMat : selMat2)); }
 }
 function exportRoot(){
   const root = new THREE.Group(); root.name = 'MiniMayaScene';
@@ -1747,7 +1754,7 @@ function exportGLB(){
   const clip = bakeClip();
   new THREE.GLTFExporter().parse(root, res => {
     saveFile(`${baseName()}-${stamp()}.glb`, new Blob([res], {type:'model/gltf-binary'}));
-  }, {binary:true, animations: clip ? [clip] : [], onlyVisible:true});
+  }, err => toast('Export failed: ' + (err && err.message || err)), {binary:true, animations: clip ? [clip] : [], onlyVisible:true});
 }
 function exportOBJ(){
   if(!objects.length) return toast('The scene is empty');
@@ -1815,21 +1822,21 @@ function applyEnv(){
   const sunC = new THREE.Color(night ? '#a9bcff' : '#fff6ea').lerp(new THREE.Color('#ffb168'), night ? 0 : warm*.85);
   keyLight.color.copy(sunC);
   skyMat.uniforms.sunDir.value.copy(keyLight.position).normalize(); skyMat.uniforms.sunCol.value.copy(sunC).convertSRGBToLinear(); skyMat.uniforms.sunAmt.value = night ? .25 : 1;
-  rimLight.position.set(-sin(az)*9, 5, -cos(az)*9); rimLight.color.set(night ? '#7f97ff' : '#fff1de').lerp(new THREE.Color(env.horizon), .3); rimLight.intensity = (night ? .5 : .42)*(env.filmic ? 1 : .7);
+  rimLight.position.set(-sin(az)*9, 5, -cos(az)*9); rimLight.color.set(night ? '#7f97ff' : '#fff1de').lerp(new THREE.Color(env.horizon), .3); rimLight.intensity = (night ? .5 : .42)*(env.filmic ? 1 : .7)*THREE.LIGHT_K;
   hemi.color.set(env.top).lerp(new THREE.Color('#ffffff'), .45); hemi.groundColor.set(env.ground).multiplyScalar(.7);
   if(env.haze !== false && env.sky){ if(!scene.fog) scene.fog = new THREE.Fog(0xffffff, 30, 170); scene.fog.color.set(env.horizon).convertSRGBToLinear(); } else scene.fog = null;
-  keyLight.intensity = env.sun*(env.filmic ? 1.25 : 1); hemi.intensity = env.amb*(env.filmic ? 1.3 : 1);
-  const tm = env.filmic ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping; if(renderer.toneMapping !== tm){ renderer.toneMapping = tm; scene.traverse(n => { if(n.material) (Array.isArray(n.material) ? n.material : [n.material]).forEach(m => m.needsUpdate = true); }); }
+  keyLight.intensity = env.sun*(env.filmic ? 1.25 : 1)*THREE.LIGHT_K; hemi.intensity = env.amb*(env.filmic ? 1.3 : 1)*THREE.LIGHT_K;
+  const tm = env.filmic ? THREE.NeutralToneMapping : THREE.NoToneMapping; if(renderer.toneMapping !== tm){ renderer.toneMapping = tm; scene.traverse(n => { if(n.material) (Array.isArray(n.material) ? n.material : [n.material]).forEach(m => m.needsUpdate = true); }); }
   viewEl.classList.toggle('skyon', !!env.sky);
 }
 
 /* ----- look-dev pipeline: SSAO, depth of field, bloom, grade, FXAA ----- */
 const GradeShader = {
-  uniforms:{tDiffuse:{value:null}, vignette:{value:.28}, sat:{value:1.07}, contrast:{value:1.05}, warmth:{value:.012}, grain:{value:.018}, time:{value:0}},
+  uniforms:{tDiffuse:{value:null}, vignette:{value:.26}, sat:{value:.96}, contrast:{value:1.06}, warmth:{value:.012}, grain:{value:.018}, time:{value:0}},
   vertexShader:'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
   fragmentShader:`uniform sampler2D tDiffuse; uniform float vignette, sat, contrast, warmth, grain, time; varying vec2 vUv;
     vec3 toS(vec3 c){ c = max(c, 0.0); return mix(pow(c, vec3(1.0/2.4))*1.055 - 0.055, c*12.92, vec3(lessThanEqual(c, vec3(0.0031308)))); }
-    void main(){ vec3 c = toS(texture2D(tDiffuse, vUv).rgb);
+    void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb;
       float l = dot(c, vec3(.2126, .7152, .0722)); c = mix(vec3(l), c, sat); c = (c - .5)*contrast + .5; c += vec3(warmth, warmth*.35, -warmth);
       vec2 d = (vUv - .5)*vec2(1.0, .82); c *= 1.0 - vignette*smoothstep(.32, .9, length(d)*1.45);
       c += (fract(sin(dot(vUv*vec2(1733.0, 977.0) + time, vec2(12.9898, 78.233)))*43758.5453) - .5)*grain;
@@ -1837,30 +1844,28 @@ const GradeShader = {
 };
 let lookView = 'prod';
 function makeLook(w, h, pr, offscreen){
-  const rtOpt = {minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter, format:THREE.RGBAFormat, type:THREE.HalfFloatType};
-  const composer = new THREE.EffectComposer(renderer, new THREE.WebGLRenderTarget(Math.max(1, w*pr), Math.max(1, h*pr), rtOpt));
+  const W = Math.max(1, Math.round(w*pr)), H = Math.max(1, Math.round(h*pr));
+  const composer = new THREE.EffectComposer(renderer, new THREE.WebGLRenderTarget(W, H, {type:THREE.HalfFloatType, samples:offscreen ? 0 : 4}));
   composer.setPixelRatio(pr); composer.setSize(w, h);
-  const ssao = new THREE.SSAOPass(scene, camera, w*pr, h*pr);
-  if(ssao.normalRenderTarget.depthTexture) ssao.normalRenderTarget.depthTexture.type = THREE.UnsignedIntType;
-  ssao.normalMaterial.skinning = true;
-  ssao.kernelRadius = .42; ssao.minDistance = .00004; ssao.maxDistance = .0028;
-  const bokeh = new THREE.BokehPass(scene, camera, {focus:6, aperture:.0016, maxblur:.0065, width:w*pr, height:h*pr}); bokeh.needsSwap = true; bokeh.enabled = false; bokeh.materialDepth.skinning = true;
-  const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(w*pr, h*pr), .2, .55, .965);
+  const rp = new THREE.RenderPass(scene, camera);
+  const gtao = new THREE.GTAOPass(scene, camera, W, H);
+  gtao.output = THREE.GTAOPass.OUTPUT.Default; gtao.blendIntensity = .95;
+  gtao.updateGtaoMaterial({radius:.32, distanceExponent:1.6, thickness:1.2, scale:1.15, samples:16, distanceFallOff:1, screenSpaceRadius:false});
+  gtao.updatePdMaterial({lumaPhi:10, depthPhi:2, normalPhi:3, radius:6, rings:2, samples:16});
+  const bokeh = new THREE.BokehPass(scene, camera, {focus:6, aperture:.0016, maxblur:.0065}); bokeh.enabled = false;
+  const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(W, H), .12, .4, 3.2);
+  const out = new THREE.OutputPass();
   const grade = new THREE.ShaderPass(GradeShader);
-  const fxaa = new THREE.ShaderPass(THREE.FXAAShader); fxaa.uniforms.resolution.value.set(1/(w*pr), 1/(h*pr));
-  [ssao, bokeh, bloom, grade, fxaa].forEach(p => composer.addPass(p));
-  fxaa.renderToScreen = !offscreen;
-  return {composer, ssao, bokeh, bloom, grade, fxaa, w, h, pr};
+  const fxaa = new THREE.ShaderPass(THREE.FXAAShader); fxaa.material.uniforms.resolution.value.set(1/W, 1/H);
+  [rp, gtao, bokeh, bloom, out, grade, fxaa].forEach(p => composer.addPass(p));
+  return {composer, rp, gtao, bokeh, bloom, out, grade, fxaa, w, h, pr};
 }
 function lookCam(L, cam){
-  const S = L.ssao;
-  if(S.camera !== cam || S._pm !== cam.projectionMatrix.elements.join()){
-    S.camera = cam; S._pm = cam.projectionMatrix.elements.join();
-    const u = S.ssaoMaterial.uniforms; u.cameraNear.value = cam.near; u.cameraFar.value = cam.far; u.cameraProjectionMatrix.value.copy(cam.projectionMatrix); u.cameraInverseProjectionMatrix.value.copy(cam.projectionMatrixInverse);
-    S.depthRenderMaterial.uniforms.cameraNear.value = cam.near; S.depthRenderMaterial.uniforms.cameraFar.value = cam.far;
-  }
-  L.bokeh.camera = cam; L.bokeh.uniforms.aspect.value = cam.aspect;
+  L.rp.camera = cam; L.gtao.camera = cam; L.bokeh.camera = cam;
+  if(L.bokeh.uniforms && L.bokeh.uniforms.aspect) L.bokeh.uniforms.aspect.value = cam.aspect;
+  if(L.bokeh.materialBokeh){ const u = L.bokeh.materialBokeh.uniforms; if(u.nearClip) u.nearClip.value = cam.near; if(u.farClip) u.farClip.value = cam.far; if(u.aspect) u.aspect.value = cam.aspect; }
 }
+function bokehU(L){ return (L.bokeh.materialBokeh && L.bokeh.materialBokeh.uniforms) || L.bokeh.uniforms; }
 function focusFor(cam){
   const cp = new THREE.Vector3(); cam.getWorldPosition(cp);
   const co = objects.find(o => o.camera === cam);
@@ -1873,8 +1878,8 @@ function focusFor(cam){
 let lookV = null, lookR = null, copyQuad = null, rt8 = null;
 function renderLookScreen(cam, x, y, w, h, dof){
   const pr = Math.min(renderer.getPixelRatio(), 1.5);
-  if(!lookV || lookV.w !== w || lookV.h !== h){ if(lookV) lookV.composer.renderTarget1.dispose(); lookV = makeLook(w, h, pr, false); }
-  lookCam(lookV, cam); lookV.bokeh.enabled = !!dof; if(dof) lookV.bokeh.uniforms.focus.value = focusFor(cam);
+  if(!lookV || lookV.w !== w || lookV.h !== h){ if(lookV) lookV.composer.dispose && lookV.composer.dispose(); lookV = makeLook(w, h, pr, false); lookV.fxaa.renderToScreen = true; }
+  lookCam(lookV, cam); lookV.bokeh.enabled = !!dof; if(dof) bokehU(lookV).focus.value = focusFor(cam);
   lookV.grade.uniforms.time.value = 0; lookV.grade.uniforms.grain.value = .012;
   const cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha();
   renderer.setClearColor(env.sky ? 0x000000 : new THREE.Color(rset.bg).convertSRGBToLinear(), 1);
@@ -1884,8 +1889,10 @@ function renderLookScreen(cam, x, y, w, h, dof){
 }
 function renderLookTarget(cam, W, H, f){
   if(!lookR || lookR.w !== W || lookR.h !== H){ lookR = makeLook(W, H, 1, true); if(rt8) rt8.dispose(); rt8 = new THREE.WebGLRenderTarget(W, H); }
-  if(!copyQuad) copyQuad = new THREE.FullScreenQuad(new THREE.ShaderMaterial(THREE.CopyShader));
-  lookCam(lookR, cam); lookR.bokeh.enabled = movie.dof !== false; lookR.bokeh.uniforms.focus.value = focusFor(cam);
+  if(!copyQuad) copyQuad = new THREE.FullScreenQuad(new THREE.ShaderMaterial({uniforms:THREE.UniformsUtils.clone(THREE.CopyShader.uniforms), vertexShader:THREE.CopyShader.vertexShader, fragmentShader:THREE.CopyShader.fragmentShader}));
+  const prod = movie.look !== 'plain';
+  lookCam(lookR, cam); lookR.gtao.enabled = lookR.bloom.enabled = lookR.grade.enabled = prod;
+  lookR.bokeh.enabled = prod && movie.dof !== false; if(lookR.bokeh.enabled) bokehU(lookR).focus.value = focusFor(cam);
   lookR.grade.uniforms.time.value = (f % 97)*.13; lookR.grade.uniforms.grain.value = .02;
   renderer.setClearColor(env.sky ? 0x000000 : new THREE.Color(rset.bg).convertSRGBToLinear(), 1);
   lookR.composer.render();
@@ -1988,8 +1995,8 @@ function allFurVisible(){
 }
 
 /* materials for v0.7 characters */
-function skinMat(hex, vcol){ const m = new THREE.MeshPhysicalMaterial({roughness:.5, metalness:0, sheen:new THREE.Color(.42, .2, .16), clearcoat:.05, clearcoatRoughness:.6, envMapIntensity:.42, vertexColors:!!vcol}); setMatColor(m, vcol ? '#ffffff' : hex); return m; }
-function clothMat(hex, rough=.86){ const m = new THREE.MeshPhysicalMaterial({roughness:rough, metalness:0, sheen:new THREE.Color(.3, .3, .3), envMapIntensity:.32}); setMatColor(m, hex); return m; }
+function skinMat(hex, vcol){ const m = new THREE.MeshPhysicalMaterial({roughness:.5, metalness:0, sheen:1, sheenColor:new THREE.Color(.42, .2, .16), sheenRoughness:.65, clearcoat:.05, clearcoatRoughness:.6, envMapIntensity:.42, vertexColors:!!vcol}); setMatColor(m, vcol ? '#ffffff' : hex); return m; }
+function clothMat(hex, rough=.86){ const m = new THREE.MeshPhysicalMaterial({roughness:rough, metalness:0, sheen:1, sheenColor:new THREE.Color(.3, .3, .3), sheenRoughness:.65, envMapIntensity:.32}); setMatColor(m, hex); return m; }
 function hairMat(){ return new THREE.MeshPhysicalMaterial({color:0xffffff, vertexColors:true, roughness:.5, metalness:0, clearcoat:.22, clearcoatRoughness:.3, envMapIntensity:.32}); }
 const _irisCache = {};
 function irisTex(hex, slit){
@@ -2927,8 +2934,8 @@ function hideHelpers(){
     if(n.userData.helper || n.userData.viewOnly){ if(n.visible){ n.visible = false; restore.push(() => n.visible = true); } }
     else if(n.userData.lightProxy && n.material.visible){ n.material.visible = false; restore.push(() => n.material.visible = true); }
   });
-  const g = grid.visible, t = tc.visible; tc.visible = false;
-  return () => { restore.forEach(f => f()); grid.visible = g; tc.visible = t; };
+  const g = grid.visible, t = tcH.visible; tcH.visible = false;
+  return () => { restore.forEach(f => f()); grid.visible = g; tcH.visible = t; };
 }
 
 /* ----- frame evaluation ----- */
@@ -3883,13 +3890,7 @@ function renderFrame(f, w, h, ss, mbOverride){
     const cam = renderCam(f), oldAspect = cam.aspect;
     cam.aspect = w/h; cam.updateProjectionMatrix();
     renderer.setScissorTest(false);
-    if(movie.look !== 'plain'){ renderer.readRenderTargetPixels(renderLookTarget(cam, W, H, f), 0, 0, W, H, buf); }
-    else {
-      renderer.setRenderTarget(rt);
-      renderer.setClearColor(new THREE.Color(rset.bg), 1); renderer.clear();
-      renderer.render(scene, cam);
-      renderer.readRenderTargetPixels(rt, 0, 0, W, H, buf);
-    }
+    renderer.readRenderTargetPixels(renderLookTarget(cam, W, H, f), 0, 0, W, H, buf);
     cam.aspect = oldAspect; cam.updateProjectionMatrix();
     if(acc) for(let j = 0; j < buf.length; j++) acc[j] += buf[j];
   }
@@ -4344,7 +4345,7 @@ new ResizeObserver(resize).observe(viewEl);
 new ResizeObserver(drawTimeline).observe(tl);
 new ResizeObserver(() => drawGraph()).observe(gcv);
 
-const clock = new THREE.Clock();
+const clock = new THREE.Timer(); clock.getDelta = function(){ this.update(); return Math.min(.1, THREE.Timer.prototype.getDelta.call(this)); };
 let acc = 0, smoothPlay = true;
 function loop(){
   requestAnimationFrame(loop);

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.0
+- Engine upgraded from three.js r128 (2021) to r186 (current), loaded as ES modules through an import map; three-vrm 3.5 is vendored for upcoming spring physics and toon shading
+- New ambient occlusion (GTAO, denoised) replaces SSAO; post chain is Render, GTAO, depth of field, bloom, Output (tone map and sRGB), grade, FXAA, the same for viewport, film view and MP4
+- Neutral tone mapping (Khronos PBR Neutral) instead of ACES: colours stay as authored, skies stay blue, better for cartoons; exposure and grade rebalanced
+- Lights rescaled for physically based light units; shadows use PCF with a soft radius
+- The font stylesheet no longer blocks start-up on a slow network
+- Fixed: post-processing copy no longer writes into three.js's shared CopyShader uniforms
+- Removed the old r128 vendor files
+
 ## 0.9.0
 - Characters can wear a real 3D model: Attribute Editor, Character, "Use a model…" takes a VRM (VRoid Studio, VRM 0.x or 1.0) or any Mixamo-rigged GLB. MayaToon drives its skeleton, so every action, walk, run, gesture, look-at, Story director scene and render works with it
 - Retargeting in character space: spine, neck and head copy rotation; arms and legs match direction, so T-pose and A-pose models map onto MayaToon motion
