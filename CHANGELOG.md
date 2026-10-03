@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.13.0
+- Cast library (Story tab, Cast; or Attribute Editor, From cast…): generate textured, auto-rigged characters from a name, culture, age, gender and a description. MayaToon writes the Meshy prompt (T-pose, separated limbs, animated-film style, culture-aware outfits), runs preview, texturing (PBR) and rigging, then downloads the rigged GLB and a thumbnail
+- Generated characters work with every action, IK pose, foot locking, physics, the Story director, auto-cut cameras and renders
+- Generate the cast for this story: one click starts a job per character in the current scene; each replaces its built-in look when ready
+- Story director option: use Cast models for characters with matching names
+- Jobs run in the background on the studio server; Meshy task ids are saved after every step, so a restart resumes instead of paying again, and Retry continues a failed job from its last finished step; downloads retry automatically
+- Meshy key, face budget and a Test Meshy button (shows remaining credits) in AI and voice settings; MESHY_API_KEY is picked up by the installer
+- Wider skeleton-name matching (Mixamo, Unreal, Blender and generic rigs)
+
 ## 0.12.0
 - IK pose tool (I, or the new tool button): drag a character's hands, feet or purple look target in the viewport; a two-bone IK solver bends the limb to reach and keys an additive pose layer on top of its actions. Poses blend smoothly between keys; a weight slider and Clear key / Clear all live in the Attribute Editor. Works with VRM and Mixamo models too
 - Foot locking with leg IK (Display menu, on by default): feet that touch the ground stay planted while the body moves; grounded foot drift on a test walk fell from about 61 cm to under 1 cm

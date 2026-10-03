@@ -63,7 +63,7 @@ fi
 import json, os, sys
 p = sys.argv[1]
 env = {"anthropic_key": "ANTHROPIC_API_KEY", "openai_key": "OPENAI_API_KEY", "eleven_key": "ELEVENLABS_API_KEY",
-       "azure_key": "AZURE_SPEECH_KEY", "azure_region": "AZURE_SPEECH_REGION", "google_key": "GOOGLE_TTS_API_KEY"}
+       "azure_key": "AZURE_SPEECH_KEY", "azure_region": "AZURE_SPEECH_REGION", "google_key": "GOOGLE_TTS_API_KEY", "meshy_key": "MESHY_API_KEY"}
 try: d = json.load(open(p))
 except Exception: d = {}
 got = [k for k, e in env.items() if os.environ.get(e) and not d.get(k)]

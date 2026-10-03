@@ -569,7 +569,7 @@ dialog::backdrop{background:rgba(5,6,8,.55);backdrop-filter:blur(4px)}
           <label class="f"><span>Bottom</span><input type="color" id="cBot"></label>
           <label class="f"><span>Clothes</span><select id="cStyle"></select></label>
           <label class="f"><span>Shoes</span><input type="color" id="cShoes"></label>
-          <div class="f" id="cModelW"><span>3D model</span><div style="display:flex;gap:6px;align-items:center;min-width:0"><button class="btn" id="cModelBtn" type="button">Use a model…</button><button class="btn" id="cModelClr" type="button" hidden>Built-in</button></div></div>
+          <div class="f" id="cModelW"><span>3D model</span><div style="display:flex;gap:6px;align-items:center;min-width:0"><button class="btn" id="cModelBtn" type="button">Use a model…</button><button class="btn" data-cmd="cast" type="button">From cast…</button><button class="btn" id="cModelClr" type="button" hidden>Built-in</button></div></div>
           <div class="hint" id="cModelHint" style="margin:-2px 0 6px">Bring a VRM from VRoid Studio or any Mixamo-rigged GLB: it acts, walks, talks and emotes with everything here.</div>
           <div class="f" id="cLayerW"><span>Pose layer</span><div style="display:flex;gap:6px;align-items:center;min-width:0"><input type="range" id="cLayerW8" min="0" max="1" step=".05" style="flex:1;min-width:60px"><button class="btn" data-cmd="layerClearHere" type="button" title="Remove the pose key at this frame">Clear key</button><button class="btn" data-cmd="layerClear" type="button" title="Remove the whole pose layer">Clear all</button></div></div>
           <div class="hint" id="cLayerHint" style="margin:-2px 0 6px">Press I and drag hands, feet or the look target to refine any action; poses blend smoothly between keys.</div>
@@ -666,8 +666,8 @@ window.THREE = THREE;
 <script type="module">
 (function(){
 'use strict';
-const APP_VERSION = '0.12.0';
-const BUILD_ID = '20261003-042350-2403';
+const APP_VERSION = '0.13.0';
+const BUILD_ID = '20261003-050351-7271';
 const $ = s => document.querySelector(s);
 const DEG = Math.PI/180;
 
@@ -754,6 +754,7 @@ function shelfButton(cmd, arg, icon, label, help, cls){
 function buildShelf(){
   const tabs = {
     Story: () => [shelfButton('director', null, ICONS.wand, 'New story', 'Story director: type an idea, pick a culture and language. MayaToon writes the story, builds the set, casts voices, cuts the cameras and can render the movie.', 'wide'),
+      shelfButton('cast', null, ICONS.char || ICONS.human || ICONS.wand, 'Cast', 'Cast library: generate textured, auto-rigged characters from a description (Meshy) and reuse them across stories.', 'wide'),
       shelfButton('voiceLab', null, ICONS.mic, 'Voice lab', 'Voice lab: hear every voice, record your own lines, and clone a voice you have permission to use.', 'wide'),
       shelfButton('voiceAll', null, ICONS.audio, 'Voice all', 'Voice all: speak every line that is new or changed, in each character\'s voice.', 'wide'),
       shelfButton('autoCut', null, ICONS.cut, 'Auto-cut', 'Auto-cut: place cameras and cut between a wide shot and close-ups of whoever is speaking, with gentle camera moves.', 'wide'),
@@ -2844,6 +2845,11 @@ const NAME_HINTS = {hips:/^(hips|pelvis)$/, spine:/^spine$/, chest:/^(spine1|che
   leftUpperArm:/^(leftarm|leftupperarm|upperarm\.?l|l(eft)?upperarm)$/, leftLowerArm:/^(leftforearm|leftlowerarm|forearm\.?l|lowerarm\.?l)$/, leftHand:/^(lefthand|hand\.?l)$/,
   rightUpperArm:/^(rightarm|rightupperarm|upperarm\.?r|r(ight)?upperarm)$/, rightLowerArm:/^(rightforearm|rightlowerarm|forearm\.?r|lowerarm\.?r)$/, rightHand:/^(righthand|hand\.?r)$/,
   leftEye:/^(lefteye|eye\.?l)$/, rightEye:/^(righteye|eye\.?r)$/};
+const NAME_HINTS2 = {hips:/^(pelvis|root\d*hips|hip)$/, spine:/^(spine0?1|spine01|lowerspine|abdomen)$/, chest:/^(spine0?2|spine03|upperchest|chest01|thorax)$/, neck:/^(neck0?1|neckbase)$/, head:/^(head0?1)$/,
+  leftUpperLeg:/^(thighl|lthigh|leftupleg|upperlegl|lupperleg|leftthigh|legupperl)$/, leftLowerLeg:/^(calfl|lcalf|lowerlegl|llowerleg|leftknee|leftshin|leglowerl|shinl)$/, leftFoot:/^(footl|lfoot|leftankle|anklel)$/,
+  rightUpperLeg:/^(thighr|rthigh|rightupleg|upperlegr|rupperleg|rightthigh|legupperr)$/, rightLowerLeg:/^(calfr|rcalf|lowerlegr|rlowerleg|rightknee|rightshin|leglowerr|shinr)$/, rightFoot:/^(footr|rfoot|rightankle|ankler)$/,
+  leftUpperArm:/^(upperarml|lupperarm|leftupperarm|armupperl|leftshoulder2|arml)$/, leftLowerArm:/^(lowerarml|llowerarm|forearml|leftelbow|armlowerl)$/, leftHand:/^(handl|lhand|leftwrist)$/,
+  rightUpperArm:/^(upperarmr|rupperarm|rightupperarm|armupperr|rightshoulder2|armr)$/, rightLowerArm:/^(lowerarmr|rlowerarm|forearmr|rightelbow|armlowerr)$/, rightHand:/^(handr|rhand|rightwrist)$/};
 const charModelCache = {};
 function fetchCharModel(name){ return charModelCache[name] ||= fetch(assetURL(name)).then(r => { if(!r.ok) throw new Error('model missing'); return r.arrayBuffer(); }); }
 async function loadCharModel(o){
@@ -2857,8 +2863,9 @@ async function loadCharModel(o){
   if(vrmObj){ for(const [k] of HUMANOID.concat([['leftFoot'],['rightFoot'],['leftHand'],['rightHand'],['leftEye'],['rightEye']])){ const n = vrmObj.humanoid.getRawBoneNode(k); if(n) bones[k] = n; } }
   else if(vrm1){ for(const [k, v] of Object.entries(vrm1.humanoid.humanBones)) bones[k] = await g.parser.getDependency('node', v.node); }
   else if(vrm0){ for(const hb of vrm0.humanoid.humanBones) bones[hb.bone] = await g.parser.getDependency('node', hb.node); }
-  else g.scene.traverse(n => { if(!n.isBone && !(n.type === 'Object3D' && n.children.length)) return; const nm = n.name.replace(/^mixamorig\d*[:_]?/i, '').replace(/^(def|bip\d*|j_bip_[clr])[_ ]?/i, '').replace(/[_ ]/g, '').toLowerCase();
-    for(const [k, re] of Object.entries(NAME_HINTS)) if(!bones[k] && re.test(nm)) bones[k] = n; });
+  else g.scene.traverse(n => { if(!n.isBone && !(n.type === 'Object3D' && n.children.length)) return; const nm = n.name.replace(/^mixamorig\d*[:_]?/i, '').replace(/^(def|bip\d*|j_bip_[clr]|cc_base_|rig_)[_ ]?/i, '').replace(/[_ .\-]/g, '').toLowerCase();
+    for(const [k, re] of Object.entries(NAME_HINTS)) if(!bones[k] && re.test(nm)) bones[k] = n;
+    for(const [k, re] of Object.entries(NAME_HINTS2)) if(!bones[k] && re.test(nm)) bones[k] = n; });
   const missing = HUMANOID.filter(m => !bones[m[0]]).map(m => m[0]);
   if(missing.length > 3){ o.loadError = 'This model has no humanoid skeleton MayaToon recognises (missing ' + missing.slice(0, 4).join(', ') + '). Use a VRM from VRoid Studio or a Mixamo-rigged GLB.'; refreshAttrs(); return; }
   const holder = new THREE.Group(); const sc = g.scene; holder.add(sc);
@@ -3704,10 +3711,11 @@ async function settingsDialog(){
         ${key('eleven_key', 'ElevenLabs key', 'natural voices and voice cloning')}${val('eleven_model', 'ElevenLabs model')}
         ${key('google_key', 'Google TTS key', 'Cloud Text-to-Speech API key')}
         ${val('openai_tts_model', 'OpenAI voice model')}
+        ${key('meshy_key', 'Meshy key', 'msy_… (Pro plan; character generation)')}${val('meshy_polycount', 'Meshy face budget')}
         <span>Prefer</span><select id="v_tts_prefer"><option value="auto">Best match per language</option><option value="azure">Azure</option><option value="elevenlabs">ElevenLabs</option><option value="google">Google</option><option value="openai">OpenAI</option><option value="piper">Offline (Piper)</option><option value="mac">Mac voices</option></select>
         ${val('cloud_langs', 'Languages')}
       </div></div></div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">${['azure:Test Azure', 'elevenlabs:Test ElevenLabs', 'google:Test Google', 'openai:Test OpenAI', 'ollama:Test Ollama'].map(x => `<button class="btn" type="button" data-test="${x.split(':')[0]}">${x.split(':')[1]}</button>`).join('')}</div>`,
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${['azure:Test Azure', 'elevenlabs:Test ElevenLabs', 'google:Test Google', 'openai:Test OpenAI', 'ollama:Test Ollama', 'meshy:Test Meshy'].map(x => `<button class="btn" type="button" data-test="${x.split(':')[0]}">${x.split(':')[1]}</button>`).join('')}</div>`,
     buttons:[{label:'Save', primary:true, onClick:() => save().then(ok => ok && dmsg('Saved. Voice menus are up to date.'))}]});
   $('#v_story_engine').value = c.values.story_engine || 'auto'; $('#v_tts_prefer').value = c.values.tts_prefer || 'auto';
   const save = async () => {
@@ -3720,7 +3728,7 @@ async function settingsDialog(){
     const cl = e.target.closest('[data-clear]'), tb = e.target.closest('[data-test]');
     if(cl){ try{ c = cfgPublic = await api('config', {method:'PUT', body:JSON.stringify({[cl.dataset.clear]:null})}); settingsDialog(); }catch(err){ dmsg(err.message); } }
     if(tb){ if(!(await save())) return; dmsg(`Testing ${tb.textContent.replace('Test ', '')}…`);
-      try{ const j = await api('config/test', {method:'POST', body:JSON.stringify({provider:tb.dataset.test})}); dmsg(`${tb.textContent.replace('Test ', '')} works: ${j.count} ${tb.dataset.test === 'ollama' ? 'models' : 'voices'} found.`); }
+      try{ const j = await api('config/test', {method:'POST', body:JSON.stringify({provider:tb.dataset.test})}); dmsg(`${tb.textContent.replace('Test ', '')} works: ${j.count} ${tb.dataset.test === 'ollama' ? 'models' : tb.dataset.test === 'meshy' ? 'credits left' : 'voices'} found.`); }
       catch(err){ dmsg(err.message); } }
   });
 }
@@ -3753,7 +3761,7 @@ async function directorDialog(pre={}){
         <span>Format</span><select id="dFmt"><option value="16:9">Landscape 16:9</option><option value="9:16">Vertical 9:16 (Reels, Shorts)</option><option value="1:1">Square</option></select>
         <span>Subtitles</span><select id="dSubs"><option value="both">Dialogue and English</option><option value="native">Dialogue language</option><option value="en">English only</option><option value="off">None</option></select>
         <span>Writer</span><select id="dEngine">${engOpt.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select>
-        <span>Then</span><div style="display:flex;flex-direction:column;gap:3px"><label><input type="checkbox" id="dVoice" checked> Voice every line</label><label><input type="checkbox" id="dRender" ${server.ffmpeg ? '' : 'disabled'}> Render the MP4 at the end</label></div>
+        <span>Then</span><div style="display:flex;flex-direction:column;gap:3px"><label><input type="checkbox" id="dCast" checked> Use my Cast models for matching names</label><label><input type="checkbox" id="dVoice" checked> Voice every line</label><label><input type="checkbox" id="dRender" ${server.ffmpeg ? '' : 'disabled'}> Render the MP4 at the end</label></div>
       </div>
       <div class="hint" style="margin-top:0">Automatic writer right now: ${best}.${E.claude || E.openai || E.ollama ? '' : ' Add a Claude or OpenAI key, or run Ollama, for new stories every time and dialogue in any language.'}</div>
       <div class="steps" id="dSteps">${STEPS.map(([k, l]) => `<div data-step="${k}">${l}</div>`).join('')}</div>
@@ -3777,7 +3785,7 @@ async function directorDialog(pre={}){
   if(DIR.story && !pre.prompt){ $('#dPrompt').value = DIR.story.prompt || ''; showScript(DIR.story); }
 }
 function readDir(){ return {prompt:$('#dPrompt').value.trim(), culture:$('#dCulture').value, language:$('#dLang').value, cast:$('#dCast').value, cast_type:$('#dType').value, length:$('#dLen').value,
-  fmt:$('#dFmt').value, subs:$('#dSubs').value, engine:$('#dEngine').value, voice:$('#dVoice').checked, render:$('#dRender').checked}; }
+  fmt:$('#dFmt').value, subs:$('#dSubs').value, engine:$('#dEngine').value, voice:$('#dVoice').checked, render:$('#dRender').checked, cast:$('#dCast').checked}; }
 function stepUI(k, state, note){ const el = document.querySelector(`#dSteps [data-step="${k}"]`); if(!el) return; el.className = state || ''; if(note != null) el.textContent = STEPS.find(x => x[0] === k)[1] + (note ? ': ' + note : ''); }
 function showScript(st){
   const el = $('#dScript'); if(!el) return;
@@ -3813,6 +3821,7 @@ async function runPipeline(upto, rewrite){
     const prev = serialize();
     buildFromStory(DIR.story, o);
     history.push(prev);
+    if(o.cast !== false){ await castRefresh(); const nc = castAutoAssign(); if(nc) toast(`${nc} character${nc > 1 ? 's' : ''} cast from your library`); }
     applyFrame(); refreshAll(); stepUI('build', 'done', `${DIR.story.characters.length} characters, ${story.clips.length} clips`);
     if(o.voice){
       stepUI('cast', 'on'); await loadVoices();
@@ -4016,6 +4025,88 @@ function autoCut(fmt){
   refreshOutliner();
   return cuts.length;
 }
+/* ----- Cast library: AI-generated, auto-rigged characters (Meshy) ----- */
+let castState = {cast:[], jobs:[], meshy:false}, castTimer = 0, castSeen = new Set();
+async function castRefresh(){
+  try{ castState = await api('cast'); }catch(e){ return castState; }
+  for(const j of castState.jobs){
+    if(j.status === 'done' && !castSeen.has(j.id)){ castSeen.add(j.id);
+      if(j.seenBefore) continue;
+      toast(`${j.name} is ready in your Cast`);
+      if(j.apply){ const e = castState.cast.find(c => c.id === j.id); if(e) objects.filter(o => o.type === 'character' && o.name.toLowerCase() === e.name.toLowerCase() && !o.char.model).forEach(o => castAssign(o, e)); } }
+    if(j.status === 'error' && !castSeen.has(j.id)){ castSeen.add(j.id); toast(`${j.name}: ${j.error}`); }
+  }
+  const busy = castState.jobs.some(j => j.status === 'queued' || j.status === 'running');
+  clearTimeout(castTimer); if(busy) castTimer = setTimeout(castRefresh, 4000);
+  if(dlg.open && $('#castBody')) castDraw();
+  return castState;
+}
+function castAssign(o, e){ o.char.model = e.asset; if(e.gender) o.char.gender = e.gender; buildCharacter(o); applyFrame(); commit(); refreshAll(); }
+function castDraw(){
+  const el = $('#castBody'); if(!el) return;
+  const jobs = castState.jobs.filter(j => j.status !== 'done');
+  const sel = primary() && primary().type === 'character' ? primary() : null;
+  el.innerHTML = (jobs.length ? `<h4>Generating</h4>` + jobs.map(j => `<div class="it" style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:6px"><div><b>${esc(j.name)}</b> <small class="tag">${esc(j.stage)}</small>${j.status === 'error' ? `<div class="bad" style="font-size:12px">${esc(j.error)}</div>` : `<div class="meter" style="margin-top:4px"><i style="width:${j.progress}%"></i></div>`}</div><div style="display:flex;gap:4px">${j.status === 'error' ? `<button class="btn" data-retry="${j.id}" title="Resumes from the last finished Meshy step; credits already spent are not spent again">Retry</button>` : ''}<button class="btn" data-dismiss="${j.id}">${j.status === 'error' ? 'Dismiss' : 'Hide'}</button></div></div>`).join('') : '')
+    + `<h4>Your cast (${castState.cast.length})</h4>`
+    + (castState.cast.length ? `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">` + castState.cast.slice().reverse().map(c => `<div class="it" style="border:1px solid var(--line);border-radius:10px;padding:6px;background:var(--field)">
+        ${c.thumb ? `<img src="media/assets/${encodeURIComponent(c.thumb)}" style="width:100%;aspect-ratio:1;object-fit:contain;border-radius:6px;background:var(--chrome)">` : '<div style="aspect-ratio:1;display:grid;place-items:center;color:var(--text-dim)">no preview</div>'}
+        <div style="font-weight:700;margin-top:4px">${esc(c.name)}</div><div class="hint" style="margin:0">${esc([c.age, c.gender === 'm' ? 'male' : 'female', (storyMeta && storyMeta.cultures[c.culture] || {}).label || ''].filter(Boolean).join(' · '))}</div>
+        <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap"><button class="btn" data-use="${c.id}" ${sel ? '' : 'disabled'} title="${sel ? 'Put this model on ' + esc(sel.name) : 'Select a character first'}">Use</button><button class="btn" data-add="${c.id}">Add</button><button class="btn" data-del="${c.id}">Delete</button></div></div>`).join('') + `</div>`
+      : `<div class="hint">No generated characters yet. Describe one on the left; it takes a few minutes and some Meshy credits.</div>`);
+}
+async function castDialog(){
+  if(!server) return toast('The cast library needs the local studio server');
+  try{ await loadStoryMeta(); }catch(e){}
+  await castRefresh();
+  const M = storyMeta || {cultures:{}};
+  dialog({title:'Cast library', wide:true, html:`${castState.meshy ? '' : '<div class="note">Add your Meshy key in AI and voice settings to generate characters. Meshy builds the textured model and rigs it; MayaToon animates it.</div>'}
+    <div class="dir"><div>
+      <h4>Generate a character</h4>
+      <div class="form">
+        <span>Name</span><input type="text" id="gcName" placeholder="Asha">
+        <span>Culture</span><select id="gcCulture"><option value="">Any</option>${Object.entries(M.cultures).map(([k, c]) => `<option value="${k}">${esc(c.label)}</option>`).join('')}</select>
+        <span>Who</span><div style="display:flex;gap:6px"><select id="gcAge"><option value="child">Child</option><option value="adult" selected>Adult</option><option value="elder">Elder</option></select><select id="gcGender"><option value="f">Female</option><option value="m">Male</option></select><select id="gcSpecies"><option value="human">Human</option>${Object.keys(SPECIES).filter(k => k !== 'human').map(k => `<option value="${k}">${k}</option>`).join('')}</select></div>
+        <span>Looks</span><textarea id="gcDesc" placeholder="Long black braid, red cotton sari with a gold border, small nose ring, kind smile" style="height:70px;width:100%;border:1px solid var(--line);border-radius:7px;background:var(--field);padding:6px"></textarea>
+        <span>Style</span><select id="gcStyle"><option value="cartoon">Animated-film cartoon</option><option value="anime">Anime</option><option value="semi">Semi-realistic</option></select>
+      </div>
+      <details style="margin-top:6px"><summary class="hint" style="cursor:pointer">Prompt sent to Meshy</summary><textarea id="gcPrompt" spellcheck="false" style="width:100%;height:110px;margin-top:6px;border:1px solid var(--line);border-radius:7px;background:var(--field);padding:6px;font:12px/1.4 ui-monospace,Menlo,monospace"></textarea></details>
+      <div class="hint">Characters come out in a T-pose, are auto-rigged, and work with every action, IK pose, foot locking and the Story director. Faces have no expressions yet, so lip-sync and blinks don't show on them; VRoid models still do faces best.</div>
+      ${story.clips.length && objects.some(o => o.type === 'character' && !o.char.model) ? `<button class="btn" type="button" id="gcStory" style="margin-top:8px">Generate the cast for this story</button>` : ''}
+    </div><div id="castBody"></div></div>`,
+    buttons:[{label:'AI and voice settings…', onClick:() => settingsDialog()}, {label:'Generate', primary:true, onClick:async () => {
+      const name = $('#gcName').value.trim(); if(!name) return dmsg('Give the character a name.');
+      const body = {name, culture:$('#gcCulture').value, age:$('#gcAge').value, gender:$('#gcGender').value, species:$('#gcSpecies').value, description:$('#gcDesc').value.trim(), style:$('#gcStyle').value};
+      if($('#gcPrompt').dataset.edited) body.prompt_override = $('#gcPrompt').value;
+      try{ await api('cast/generate', {method:'POST', body:JSON.stringify(body)}); dmsg(`Generating ${name}. You can keep working; it lands in the cast when done.`); castRefresh(); }catch(e){ dmsg(e.message); }
+    }}]});
+  if(story.meta && story.meta.culture) $('#gcCulture').value = story.meta.culture;
+  const prev = async () => { if($('#gcPrompt').dataset.edited) return; try{ const j = await api('cast/prompt', {method:'POST', body:JSON.stringify({culture:$('#gcCulture').value, age:$('#gcAge').value, gender:$('#gcGender').value, species:$('#gcSpecies').value, description:$('#gcDesc').value, style:$('#gcStyle').value})}); $('#gcPrompt').value = j.prompt; }catch(e){} };
+  ['#gcCulture', '#gcAge', '#gcGender', '#gcSpecies', '#gcStyle'].forEach(id => $(id).addEventListener('change', prev)); $('#gcDesc').addEventListener('input', () => { clearTimeout(prev._t); prev._t = setTimeout(prev, 400); });
+  $('#gcPrompt').addEventListener('input', e => { e.target.dataset.edited = '1'; }); prev();
+  const gs = $('#gcStory'); if(gs) gs.onclick = async () => {
+    const todo = objects.filter(o => o.type === 'character' && !o.char.model && !castState.cast.some(c => c.name.toLowerCase() === o.name.toLowerCase()));
+    if(!todo.length) return dmsg('Every character already has a model or a cast match.');
+    let n = 0; for(const o of todo){ const ch = o.char;
+      try{ await api('cast/generate', {method:'POST', body:JSON.stringify({name:o.name, culture:(story.meta && story.meta.culture) || '', age:ch.age || 'child', gender:ch.gender || 'f', species:ch.species || 'human', style:'cartoon', apply:true,
+        description:[STYLES[ch.style] && ch.style !== 'pants' ? STYLES[ch.style].toLowerCase() : '', ch.hair && ch.hair !== 'none' ? HAIRS[ch.hair].toLowerCase() + ' hair' : '', ch.bindi ? 'bindi' : '', ch.hat && ch.hat !== 'none' ? HATS[ch.hat] : ''].filter(Boolean).join(', ')})}); n++; }catch(e){ dmsg(e.message); break; } }
+    if(n) dmsg(`Generating ${n} character${n > 1 ? 's' : ''}; each one replaces its built-in look when it's ready.`); castRefresh(); };
+  $('#castBody').onclick = async e => {
+    const u = e.target.closest('[data-use]'), a = e.target.closest('[data-add]'), d = e.target.closest('[data-del]'), x = e.target.closest('[data-dismiss]');
+    const find = id => castState.cast.find(c => c.id === id);
+    if(u){ const o = primary(); if(o && o.type === 'character'){ castAssign(o, find(u.dataset.use)); dmsg(`${o.name} now uses ${find(u.dataset.use).name}.`); } }
+    if(a){ const c = find(a.dataset.add); run('char', c.species && SPECIES[c.species] ? c.species : 'human'); const o = primary(); o.name = uniqueName(c.name); castAssign(o, c); dmsg(`${c.name} added to the scene.`); }
+    if(d){ if(d.dataset.confirm !== '1'){ d.dataset.confirm = '1'; d.textContent = 'Confirm'; return; } await api('cast/' + d.dataset.del, {method:'DELETE'}); castRefresh(); }
+    if(x){ await api('cast/jobs/' + x.dataset.dismiss, {method:'DELETE'}); castRefresh(); }
+    const rt = e.target.closest('[data-retry]'); if(rt){ try{ await api('cast/jobs/' + rt.dataset.retry + '/retry', {method:'POST'}); castSeen.delete(rt.dataset.retry); castRefresh(); }catch(err){ dmsg(err.message); } }
+  };
+  castDraw();
+}
+function castAutoAssign(){
+  let n = 0;
+  for(const o of objects) if(o.type === 'character' && !o.char.model){ const e = castState.cast.find(c => c.name.toLowerCase() === o.name.toLowerCase()); if(e){ o.char.model = e.asset; buildCharacter(o); n++; } }
+  return n;
+}
+
 function bootAutomation(){
   if(!location.hash || location.hash.length < 3) return;
   const q = new URLSearchParams(location.hash.slice(1));
@@ -4339,6 +4430,7 @@ async function api(path, opts){
     const j = await api('health');
     if(j && j.app === 'mayatoon'){ server = j; document.body.classList.add('has-server'); updateStatus();
       await loadVoices();
+      castRefresh().then(st => st && st.jobs.forEach(j => castSeen.add(j.id)));
       if(location.hash.length > 2) bootAutomation();
       else if(demoBoot && ttsVoices.length && story.clips.some(staleVoice)) voiceClips(story.clips.filter(staleVoice), 'Giving the demo voices');
       try{ studioName = localStorage.getItem('mayatoon.studioName'); }catch(e){} updateStatus(); }
@@ -4478,6 +4570,7 @@ function run(cmd, arg){
     case 'importAudio': importAudio(); break;
     case 'demo': loadDemo(); break;
     case 'director': directorDialog(); break;
+    case 'cast': castDialog(); break;
     case 'voiceLab': voiceLab(); break;
     case 'settings': settingsDialog(); break;
     case 'autoCut': autoCut(); applyFrame(); commit(); drawStory(); toggleBottom('story', true); setFilm(true); toast('Cameras placed and cut'); break;
@@ -4654,7 +4747,7 @@ setTool('move'); syncTime(); refreshAll(); resize();
 if(demoBoot){ camera.position.set(6.5, 4.8, 11); orbit.target.set(0, .8, 0); orbit.update(); setFilm(true); toggleBottom('story', true); }
 loop();
 window.__mayatoon = {get objects(){ return objects; }, get sel(){ return sel; }, get story(){ return story; }, run, select, setSelection, goFrame, serialize, finishPick, addAction, evalAll,
-  rebuild:o => { buildCharacter(o); applyFrame(); }, cam:(p, t) => { setFilm(false); camera.position.set(...p); orbit.target.set(...t); orbit.update(); }, pose:(o, P) => applyPose(o, P), evalChar:(o, f) => evalCharacter(o, f), ik:{setIkMode, ikApply, handles:ikHandles, footPoint, keyLayer, layerAt}};
+  rebuild:o => { buildCharacter(o); applyFrame(); }, cam:(p, t) => { setFilm(false); camera.position.set(...p); orbit.target.set(...t); orbit.update(); }, pose:(o, P) => applyPose(o, P), evalChar:(o, f) => evalCharacter(o, f), ik:{setIkMode, ikApply, handles:ikHandles, footPoint, keyLayer, layerAt}, cast:{castRefresh, castDialog, get state(){ return castState; }}};
 })();
 </script>
 </body>

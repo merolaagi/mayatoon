@@ -65,11 +65,12 @@ SCRIPTS = {"en": "Latin", "ne": "Devanagari", "hi": "Devanagari", "mr": "Devanag
 
 # ---------------------------------------------------------------- config
 SECRETS = {"anthropic_key": "ANTHROPIC_API_KEY", "openai_key": "OPENAI_API_KEY", "eleven_key": "ELEVENLABS_API_KEY",
-           "azure_key": "AZURE_SPEECH_KEY", "google_key": "GOOGLE_TTS_API_KEY"}
+           "azure_key": "AZURE_SPEECH_KEY", "google_key": "GOOGLE_TTS_API_KEY", "meshy_key": "MESHY_API_KEY"}
 DEFAULTS = {"anthropic_model": "claude-sonnet-5-5", "openai_model": "gpt-4o-mini", "openai_tts_model": "gpt-4o-mini-tts",
             "ollama_url": "http://127.0.0.1:11434", "ollama_model": "llama3.1", "eleven_model": "eleven_multilingual_v2",
             "azure_region": os.environ.get("AZURE_SPEECH_REGION", ""), "story_engine": "auto", "tts_prefer": "auto",
-            "cloud_langs": "en,hi,ne,te,ta,kn,ml,bn,mr,gu,pa,ur,si"}
+            "cloud_langs": "en,hi,ne,te,ta,kn,ml,bn,mr,gu,pa,ur,si", "meshy_base": os.environ.get("MESHY_API_BASE", "https://api.meshy.ai"),
+            "meshy_model": "latest", "meshy_polycount": "30000", "meshy_texture": "2k"}
 _cfg_lock = threading.Lock()
 
 
@@ -747,6 +748,170 @@ def write_story(o):
     raise RuntimeError("; ".join(errors))
 
 
+# ---------------------------------------------------------------- cast library: character generation with Meshy
+CAST = DATA / "cast.json"
+CAST_JOBS = DATA / "cast_jobs.json"
+_jobs = {}
+_jobs_lock = threading.Lock()
+MESHY_POLL = float(os.environ.get("MAYATOON_MESHY_POLL", "5"))
+CULTURE_ADJ = {"nepal": "Nepali", "india-hindi": "North Indian", "india-telugu": "Telugu South Indian", "india-tamil": "Tamil South Indian",
+               "india-kannada": "Kannada South Indian", "india-malayalam": "Malayali South Indian", "india-bengali": "Bengali", "english-uk": "British", "english-us": "American"}
+STYLE_WORDS = {"sari": "a sari with a blouse and the pallu over the shoulder", "kurta": "a long kurta with trousers", "dhoti": "a white dhoti (veshti) with a light shirt",
+               "daura": "a traditional daura suruwal with a patterned Dhaka topi cap", "pants": "a T-shirt and trousers", "shorts": "a T-shirt and shorts", "skirt": "a top and a knee-length skirt"}
+ART = {"cartoon": "stylized 3D animated-film cartoon character with appealing Pixar-like proportions, slightly large head and expressive eyes, smooth clean shapes",
+       "anime": "anime-style 3D character with clean stylized shapes", "semi": "semi-realistic stylized 3D character with natural proportions"}
+
+
+def load_cast():
+    try:
+        return json.loads(CAST.read_text())
+    except Exception:
+        return []
+
+
+def save_cast(c):
+    tmp = CAST.with_suffix(".tmp")
+    tmp.write_text(json.dumps(c, indent=1, ensure_ascii=False))
+    os.replace(tmp, CAST)
+
+
+def save_jobs():
+    with _jobs_lock:
+        keep = [j for j in _jobs.values() if j["status"] in ("queued", "running") or time.time() - j.get("updated", 0) < 86400]
+        tmp = CAST_JOBS.with_suffix(".tmp")
+        tmp.write_text(json.dumps(keep, indent=1, ensure_ascii=False))
+        os.replace(tmp, CAST_JOBS)
+
+
+def cast_prompt(d):
+    c = CULTURES.get(d.get("culture") or "") or {}
+    g = "m" if str(d.get("gender", "")).startswith("m") else "f"
+    age = d.get("age") if d.get("age") in ("child", "adult", "elder") else "adult"
+    who = {("child", "f"): "young girl", ("child", "m"): "young boy", ("adult", "f"): "woman", ("adult", "m"): "man", ("elder", "f"): "grandmother", ("elder", "m"): "grandfather"}[(age, g)]
+    species = str(d.get("species") or "human")
+    if species != "human":
+        who = "anthropomorphic %s %s standing upright on two legs" % (species, {"f": "girl", "m": "boy"}[g] if age == "child" else {"f": "lady", "m": "gentleman"}[g])
+    adj = CULTURE_ADJ.get(d.get("culture") or "", "")
+    desc = str(d.get("description") or "").strip()
+    outfit = ""
+    if not desc and c.get("wardrobe", {}).get(g):
+        outfit = "wearing " + STYLE_WORDS.get(c["wardrobe"][g][0].get("style"), "everyday clothes")
+    art = ART.get(d.get("style"), ART["cartoon"])
+    prompt = "Full-body %s: a %s%s%s%s. Standing in a T-pose with arms straight out to the sides, legs slightly apart, facing forward, friendly neutral expression, clearly separated arms, legs and fingers, game-ready character." % (
+        art, (adj + " ") if adj else "", who, (", " + desc) if desc else "", (", " + outfit) if outfit else "")
+    tex = "%s%s, vibrant clean colours, soft hand-painted animated-film look, warm natural skin tones" % (desc or outfit or who, (", " + adj + " style") if adj else "")
+    return prompt[:800], tex[:800]
+
+
+def meshy(method, path, body=None, timeout=60):
+    key = cfg("meshy_key")
+    if not key:
+        raise RuntimeError("Add your Meshy API key in AI and voice settings")
+    raw = http(method, cfg("meshy_base").rstrip("/") + path, {"Authorization": "Bearer " + key}, body, timeout=timeout)[1]
+    return json.loads(raw) if raw else {}
+
+
+def meshy_wait(path, job, stage, lo, hi):
+    t0 = time.time()
+    while True:
+        t = meshy("GET", path)
+        st = t.get("status")
+        job.update(stage=stage, progress=round(lo + (hi - lo)*(t.get("progress") or 0)/100.0, 1), updated=time.time())
+        if t.get("consumed_credits"):
+            job.setdefault("credits", {})[stage] = t["consumed_credits"]
+        if st == "SUCCEEDED":
+            return t
+        if st in ("FAILED", "CANCELED"):
+            raise RuntimeError("Meshy %s %s: %s" % (stage, st.lower(), (t.get("task_error") or {}).get("message") or "no reason given"))
+        if time.time() - t0 > 3600:
+            raise RuntimeError("Meshy %s took longer than an hour" % stage)
+        time.sleep(MESHY_POLL)
+
+
+def download(url, dest):
+    tmp, err = dest.with_name(dest.name + ".part"), None
+    for attempt in range(4):
+        try:
+            tmp.write_bytes(http("GET", url, None, None, timeout=300)[1])
+            os.replace(tmp, dest)
+            return
+        except Exception as e:
+            err = e
+            time.sleep(2*(attempt + 1)*min(1.0, MESHY_POLL))
+    raise RuntimeError("Could not download the model from Meshy: %s" % err)
+
+
+def run_cast_job(job):
+    try:
+        job.update(status="running", updated=time.time())
+        save_jobs()
+        if not job.get("preview_id"):
+            body = {"mode": "preview", "prompt": job["prompt"], "ai_model": cfg("meshy_model") or "latest", "pose_mode": "t-pose",
+                    "should_remesh": True, "topology": "triangle", "target_polycount": int(cfg("meshy_polycount") or 30000), "target_formats": ["glb"]}
+            job["preview_id"] = meshy("POST", "/openapi/v2/text-to-3d", body)["result"]
+            save_jobs()
+        meshy_wait("/openapi/v2/text-to-3d/" + job["preview_id"], job, "shape", 0, 40)
+        if not job.get("refine_id"):
+            body = {"mode": "refine", "preview_task_id": job["preview_id"], "enable_pbr": True, "texture_prompt": job["texture_prompt"],
+                    "texture_resolution": cfg("meshy_texture") or "2k", "target_formats": ["glb"]}
+            job["refine_id"] = meshy("POST", "/openapi/v2/text-to-3d", body)["result"]
+            save_jobs()
+        ref = meshy_wait("/openapi/v2/text-to-3d/" + job["refine_id"], job, "texture", 40, 75)
+        if not job.get("rig_id"):
+            job["rig_id"] = meshy("POST", "/openapi/v1/rigging", {"input_task_id": job["refine_id"], "height_meters": job.get("height", 1.6)})["result"]
+            save_jobs()
+        rig = meshy_wait("/openapi/v1/rigging/" + job["rig_id"], job, "rig", 75, 95)
+        url = ((rig.get("result") or {}).get("rigged_character_glb_url"))
+        if not url:
+            raise RuntimeError("Meshy rigging finished without a rigged GLB")
+        job.update(stage="download", progress=96, updated=time.time())
+        stem = "cast_%s_%s" % (re.sub(r"[^A-Za-z0-9]+", "", job["name"])[:20] or "char", job["id"])
+        download(url, ASSETS / (stem + ".glb"))
+        thumb = None
+        if ref.get("thumbnail_url"):
+            try:
+                download(ref["thumbnail_url"], ASSETS / (stem + ".png"))
+                thumb = stem + ".png"
+            except Exception:
+                pass
+        entry = {"id": job["id"], "name": job["name"], "asset": stem + ".glb", "thumb": thumb, "culture": job.get("culture"), "gender": job.get("gender"),
+                 "age": job.get("age"), "species": job.get("species", "human"), "description": job.get("description", ""), "prompt": job["prompt"],
+                 "style": job.get("style"), "tasks": {"preview": job["preview_id"], "refine": job["refine_id"], "rig": job["rig_id"]},
+                 "credits": sum((job.get("credits") or {}).values()), "created": time.time()}
+        cast = [c for c in load_cast() if c["id"] != job["id"]] + [entry]
+        save_cast(cast)
+        job.update(status="done", stage="done", progress=100, asset=entry["asset"], updated=time.time())
+    except Exception as e:
+        job.update(status="error", error=str(e)[:400], updated=time.time())
+    save_jobs()
+
+
+def start_cast_job(d):
+    if not cfg("meshy_key"):
+        raise RuntimeError("Add your Meshy API key in AI and voice settings first")
+    name = re.sub(r"[^\w .'-]+", "", str(d.get("name") or ""))[:40].strip() or "Character"
+    prompt, tex = cast_prompt(d)
+    if d.get("prompt_override"):
+        prompt = str(d["prompt_override"])[:800]
+    job = {"id": uuid.uuid4().hex[:10], "name": name, "culture": d.get("culture"), "gender": d.get("gender"), "age": d.get("age"), "species": d.get("species") or "human",
+           "style": d.get("style") or "cartoon", "description": str(d.get("description") or "")[:300], "height": max(.6, min(2.2, float(d.get("height") or (1.15 if d.get("age") == "child" else 1.65)))),
+           "prompt": prompt, "texture_prompt": tex, "apply": bool(d.get("apply")), "status": "queued", "stage": "queued", "progress": 0, "created": time.time(), "updated": time.time()}
+    with _jobs_lock:
+        _jobs[job["id"]] = job
+    threading.Thread(target=run_cast_job, args=(job,), daemon=True).start()
+    return job
+
+
+def resume_cast_jobs():
+    try:
+        for j in json.loads(CAST_JOBS.read_text()):
+            _jobs[j["id"]] = j
+            if j["status"] in ("queued", "running"):
+                threading.Thread(target=run_cast_job, args=(j,), daemon=True).start()
+    except Exception:
+        pass
+
+
 # ---------------------------------------------------------------- HTTP
 class Handler(SimpleHTTPRequestHandler):
     server_version = "MayaToon/" + VERSION
@@ -889,6 +1054,10 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json(HTTPStatus.OK, {"cultures": CULTURES, "engines": engines(), "languages": LANG_NAMES, "default_engine": cfg("story_engine")})
         if parts == ["voices", "profiles"]:
             return self.send_json(HTTPStatus.OK, {"profiles": load_profiles()})
+        if parts == ["cast"]:
+            with _jobs_lock:
+                jobs = sorted(_jobs.values(), key=lambda j: -j["created"])
+            return self.send_json(HTTPStatus.OK, {"cast": load_cast(), "jobs": jobs, "meshy": bool(cfg("meshy_key"))})
         if parts == ["scenes"]:
             items = []
             for f in SCENES.glob("*.json"):
@@ -921,6 +1090,14 @@ class Handler(SimpleHTTPRequestHandler):
         if parts == ["config"]:
             save_cfg(self.body_json())
             return self.send_json(HTTPStatus.OK, public_cfg())
+        if parts and len(parts) == 2 and parts[0] == "cast":
+            d = self.body_json()
+            cast = load_cast()
+            for c in cast:
+                if c["id"] == parts[1] and d.get("name"):
+                    c["name"] = re.sub(r"[^\w .'-]+", "", str(d["name"]))[:40].strip() or c["name"]
+            save_cast(cast)
+            return self.send_json(HTTPStatus.OK, {"cast": cast})
         if parts and len(parts) == 2 and parts[0] == "assets":
             p = self.asset_path(parts[1])
             if not p:
@@ -990,11 +1167,31 @@ class Handler(SimpleHTTPRequestHandler):
                     raise RuntimeError("Give the voice a name")
                 return {"profile": clone_voice(name, [str(x) for x in d.get("samples") or []], str(d["consent_text"])[:400], str(d.get("description", "")))}
             return self.guard(go)
+        if parts == ["cast", "generate"]:
+            d = self.body_json()
+            return self.guard(lambda: {"job": start_cast_job(d)})
+        if parts and len(parts) == 4 and parts[:2] == ["cast", "jobs"] and parts[3] == "retry":
+            def go():
+                with _jobs_lock:
+                    j = _jobs.get(parts[2])
+                if not j or j["status"] != "error":
+                    raise RuntimeError("Only failed jobs can be retried")
+                j.pop("error", None)
+                j.update(status="queued", stage="retrying", updated=time.time())
+                threading.Thread(target=run_cast_job, args=(j,), daemon=True).start()
+                return {"job": j}
+            return self.guard(go)
+        if parts == ["cast", "prompt"]:
+            d = self.body_json()
+            return self.guard(lambda: dict(zip(("prompt", "texture_prompt"), cast_prompt(d))))
         if parts == ["config", "test"]:
             d = self.body_json()
 
             def go():
                 which = d.get("provider")
+                if which == "meshy":
+                    b = meshy("GET", "/openapi/v1/balance")
+                    return {"ok": True, "count": b.get("balance", "?")}
                 if which == "ollama":
                     _ollama["t"] = 0
                     st = ollama_status()
@@ -1102,6 +1299,18 @@ class Handler(SimpleHTTPRequestHandler):
         if parts and len(parts) == 2 and parts[0] == "render" and JOB_RE.match(parts[1]):
             shutil.rmtree(RENDERS / parts[1], ignore_errors=True)
             return self.send_json(HTTPStatus.OK, {"ok": True})
+        if parts and len(parts) == 3 and parts[:2] == ["cast", "jobs"]:
+            with _jobs_lock:
+                _jobs.pop(parts[2], None)
+            save_jobs()
+            return self.send_json(HTTPStatus.OK, {"ok": True})
+        if parts and len(parts) == 2 and parts[0] == "cast":
+            cast = load_cast()
+            e = next((c for c in cast if c["id"] == parts[1]), None)
+            if not e:
+                return self.send_json(HTTPStatus.NOT_FOUND, {"error": "No such cast member"})
+            save_cast([c for c in cast if c["id"] != parts[1]])
+            return self.send_json(HTTPStatus.OK, {"ok": True})
         if parts and len(parts) == 3 and parts[:2] == ["voices", "profiles"]:
             return self.guard(lambda: (delete_clone(parts[2]), {"ok": True})[1])
         if not parts or len(parts) != 2 or parts[0] != "scenes":
@@ -1126,6 +1335,7 @@ def main():
     httpd = ThreadingHTTPServer((a.host, a.port), Handler)
     print("MayaToon %s on http://%s:%d  (data: %s, ffmpeg: %s)" % (VERSION, a.host, a.port, DATA, find_ffmpeg() or "not found"), flush=True)
     threading.Thread(target=all_voices, daemon=True).start()
+    resume_cast_jobs()
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

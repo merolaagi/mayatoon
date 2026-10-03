@@ -25,6 +25,10 @@ From the terminal:
 
 `make` opens the studio and runs the whole pipeline in the browser (rendering needs the page's WebGL). Movies land in `data/renders`.
 
+## Generated characters (Cast library)
+
+With a Meshy API key (Pro plan), open Story tab, **Cast**. Describe a character, pick the culture, age and gender, and Generate. In a few minutes a textured, rigged model lands in your cast; **Use** puts it on the selected character, **Add** drops it into the scene, and the Story director can cast by name automatically. Each character costs Meshy credits (shape, texture and rigging); the job keeps going if you close the dialog or restart the studio. Generated faces have no expressions yet, so for close-up dialogue a VRoid model still gives the best face.
+
 ## Your own characters (VRM and Mixamo)
 
 For a production look, give characters real models: select a character, then Attribute Editor, Character, **Use a model…**.
