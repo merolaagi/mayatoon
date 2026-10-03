@@ -420,6 +420,7 @@ dialog::backdrop{background:rgba(5,6,8,.55);backdrop-filter:blur(4px)}
       <button data-cmd="grid">Toggle grid</button>
       <button data-cmd="lookView" id="lookBtn" class="on">Production viewport (AO, bloom, grade)</button>
       <button data-cmd="smoothPlay" id="smoothBtn" class="on">Smooth playback (in-between frames)</button>
+      <button data-cmd="footLock" id="footLockBtn" class="on">Foot locking (leg IK)</button>
       <button data-cmd="physics" id="physicsBtn" class="on">Hair and cloth physics</button>
       <button data-cmd="fluid" id="fluidBtn" class="on">Natural motion (follow-through, eye contact)</button>
       <hr>
@@ -455,6 +456,7 @@ dialog::backdrop{background:rgba(5,6,8,.55);backdrop-filter:blur(4px)}
     <button class="tbtn" data-cmd="tool" data-arg="move" title="Move (W)" data-help="Move tool (W): drag an arrow to move along one axis, a square for two. Moves every selected object."><svg class="i" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/></svg></button>
     <button class="tbtn" data-cmd="tool" data-arg="rotate" title="Rotate (E)" data-help="Rotate tool (E): drag a ring to rotate around that axis."><svg class="i" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4h-4"/></svg></button>
     <button class="tbtn" data-cmd="tool" data-arg="scale" title="Scale (R)" data-help="Scale tool (R): drag a cube handle to scale along an axis, the center for uniform."><svg class="i" viewBox="0 0 24 24"><rect x="4" y="10" width="10" height="10"/><path d="M14 10l6-6M15 4h5v5"/></svg></button>
+    <button class="tbtn" id="ikBtn" data-cmd="ikMode" title="IK pose (I)" data-help="IK pose (I): drag a character's hands, feet or look target; MayaToon solves the limb and keys an additive pose layer on top of its actions."><svg class="i" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2"/><circle cx="12" cy="8" r="2"/><circle cx="19" cy="15" r="2.4"/><path d="M7.5 16.5L11 9.7M13.6 9.2l4.2 4.4"/></svg></button>
     <hr>
     <button class="tbtn" id="snapBtn" data-cmd="snap" title="Snap (X)" data-help="Snap (X): move in 0.5 steps, rotate in 15° steps, scale in 0.25 steps."><svg class="i" viewBox="0 0 24 24"><path d="M6 4v8a6 6 0 0 0 12 0V4h-4v8a2 2 0 0 1-4 0V4z"/><path d="M6 8h4M14 8h4"/></svg></button>
     <button class="tbtn" data-cmd="frameSel" title="Frame selected (F)" data-help="Frame selected (F): zoom the camera to fit the selection."><svg class="i" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><circle cx="12" cy="12" r="2.5"/></svg></button>
@@ -492,6 +494,12 @@ dialog::backdrop{background:rgba(5,6,8,.55);backdrop-filter:blur(4px)}
         <button class="b" data-cmd="interp" data-arg="spline">Spline</button>
         <button class="b" data-cmd="interp" data-arg="linear">Linear</button>
         <button class="b" data-cmd="interp" data-arg="step">Stepped</button>
+        <span class="sep"></span>
+        <span style="color:var(--text-dim)">Key tangent</span>
+        <button class="b" data-cmd="ktan" data-arg="auto" title="Auto: smooth, never overshoots a key">Auto</button>
+        <button class="b" data-cmd="ktan" data-arg="linear" title="Linear: straight into and out of the key">Linear</button>
+        <button class="b" data-cmd="ktan" data-arg="flat" title="Flat: ease in and out, holds still on the key">Flat</button>
+        <button class="b" data-cmd="ktan" data-arg="step" title="Stepped: hold this value until the next key">Step</button>
         <span class="sep"></span>
         <label>Key frame <input type="number" id="gkFrame" step="1"></label>
         <label>Value <input type="number" id="gkVal" step="0.1"></label>
@@ -563,6 +571,8 @@ dialog::backdrop{background:rgba(5,6,8,.55);backdrop-filter:blur(4px)}
           <label class="f"><span>Shoes</span><input type="color" id="cShoes"></label>
           <div class="f" id="cModelW"><span>3D model</span><div style="display:flex;gap:6px;align-items:center;min-width:0"><button class="btn" id="cModelBtn" type="button">Use a model…</button><button class="btn" id="cModelClr" type="button" hidden>Built-in</button></div></div>
           <div class="hint" id="cModelHint" style="margin:-2px 0 6px">Bring a VRM from VRoid Studio or any Mixamo-rigged GLB: it acts, walks, talks and emotes with everything here.</div>
+          <div class="f" id="cLayerW"><span>Pose layer</span><div style="display:flex;gap:6px;align-items:center;min-width:0"><input type="range" id="cLayerW8" min="0" max="1" step=".05" style="flex:1;min-width:60px"><button class="btn" data-cmd="layerClearHere" type="button" title="Remove the pose key at this frame">Clear key</button><button class="btn" data-cmd="layerClear" type="button" title="Remove the whole pose layer">Clear all</button></div></div>
+          <div class="hint" id="cLayerHint" style="margin:-2px 0 6px">Press I and drag hands, feet or the look target to refine any action; poses blend smoothly between keys.</div>
           <label class="f" id="cHatW"><span>Hat</span><select id="cHat"></select></label>
           <label class="f" id="cBindiW"><span>Bindi</span><input type="checkbox" id="cBindi" style="justify-self:start"></label>
           <div class="f"><span>Size</span><div class="rng"><input type="range" id="cSize" min=".6" max="1.4" step=".01"><output id="oSize"></output></div></div>
@@ -656,8 +666,8 @@ window.THREE = THREE;
 <script type="module">
 (function(){
 'use strict';
-const APP_VERSION = '0.11.0';
-const BUILD_ID = '20261003-041353-7092';
+const APP_VERSION = '0.12.0';
+const BUILD_ID = '20261003-042350-2403';
 const $ = s => document.querySelector(s);
 const DEG = Math.PI/180;
 
@@ -880,7 +890,7 @@ function makeObject(d){
   mesh.visible = d.visible !== false;
   const o = {id:d.id, name:d.name, type:d.type, color:d.color || '#bfc4cb', rough:d.rough ?? .55, metal:d.metal ?? 0,
              intensity:d.intensity ?? 1.2, interp:d.interp || 'spline', parent:null, mesh, light: mesh.children.find(c => c.isPointLight) || null,
-             keys: d.keys ? JSON.parse(JSON.stringify(d.keys)) : {}};
+             keys: d.keys ? JSON.parse(JSON.stringify(d.keys)) : {}, poseLayer: d.poseLayer ? JSON.parse(JSON.stringify(d.poseLayer)) : null};
   objOf.set(mesh, o);
   scene.add(mesh); objects.push(o);
   if(o.type === 'character'){ o.char = Object.assign(defaultChar((d.char && d.char.species) || 'human'), d.char || {}); buildCharacter(o); }
@@ -923,7 +933,7 @@ const trs = m => ({p:m.position.toArray(), r:[m.rotation.x, m.rotation.y, m.rota
 /* ---------- serialization / history ---------- */
 function objData(o){
   return {id:o.id, name:o.name, type:o.type, parent:o.parent, color:o.color, rough:o.rough, metal:o.metal,
-          intensity:o.intensity, interp:o.interp, visible:o.mesh.visible, ...trs(o.mesh), keys:o.keys,
+          intensity:o.intensity, interp:o.interp, visible:o.mesh.visible, ...trs(o.mesh), keys:o.keys, poseLayer:o.poseLayer || undefined,
           char:o.char, prop:o.prop, cam:o.cam, asset:o.asset};
 }
 function snapshot(){ return {app:'mayatoon', v:4, nextId, frame, start, end, fps, objects: objects.map(objData),
@@ -1059,6 +1069,7 @@ renderer.domElement.addEventListener('pointerup', e => {
   const r = renderer.domElement.getBoundingClientRect();
   ndc.set((e.clientX-r.left)/r.width*2-1, -(e.clientY-r.top)/r.height*2+1);
   ray.setFromCamera(ndc, camera);
+  if(ikPick()) return;
   const pickable = objects.filter(o => o.type !== 'group' && isShown(o)).map(o => o.mesh);
   const hits = ray.intersectObjects(pickable, true).filter(h => h.object.visible);
   select(hits.length ? ownerOf(hits[0].object) : null, e.shiftKey || e.ctrlKey || e.metaKey);
@@ -1182,16 +1193,32 @@ const keyFrames = o => Object.keys(o.keys).map(Number).sort((a,b)=>a-b);
 function setKey(o, f){ o.keys[f] = trs(o.mesh); }
 function autoKeyMaybe(){ if(!autoKey) return; sel.forEach(o => { if(Object.keys(o.keys).length) setKey(o, frame); }); }
 function cr(p0,p1,p2,p3,t){ const t2=t*t, t3=t2*t; return .5*((2*p1)+(-p0+p2)*t+(2*p0-5*p1+4*p2-p3)*t2+(-p0+3*p1-3*p2+p3)*t3); }
+const tanMode = (o, f) => o.keys[f].t || (o.interp === 'linear' ? 'linear' : o.interp === 'step' ? 'step' : 'auto');
+function slopeAt(get, fs, i, mode, side){
+  const n = fs.length, v = get(i);
+  if(mode === 'flat' || mode === 'step') return 0;
+  if(mode === 'linear'){ const k = side === 'out' ? i + 1 : i - 1; return k >= 0 && k < n ? (get(k) - v)/(fs[k] - fs[i]) : 0; }
+  if(i === 0 || i === n - 1) return 0;
+  const pv = get(i - 1), nv = get(i + 1);
+  if((v - pv)*(nv - v) <= 0) return 0;
+  let m = (nv - pv)/(fs[i + 1] - fs[i - 1]);
+  const m1 = 3*(v - pv)/(fs[i] - fs[i - 1]), m2 = 3*(nv - v)/(fs[i + 1] - fs[i]);
+  if(abs(m) > abs(m1)) m = m1; if(abs(m) > abs(m2)) m = m2;
+  return m;
+}
+function hermite(get, fs, t, modeOf){
+  const n = fs.length;
+  if(t <= fs[0]) return get(0);
+  if(t >= fs[n - 1]) return get(n - 1);
+  let i = 0; while(fs[i + 1] <= t) i++;
+  const a = get(i), b = get(i + 1), m0 = modeOf(i);
+  if(m0 === 'step') return a;
+  const h = fs[i + 1] - fs[i], u = (t - fs[i])/h, u2 = u*u, u3 = u2*u;
+  const s0 = slopeAt(get, fs, i, m0, 'out')*h, s1 = slopeAt(get, fs, i + 1, modeOf(i + 1), 'in')*h;
+  return (2*u3 - 3*u2 + 1)*a + (u3 - 2*u2 + u)*s0 + (-2*u3 + 3*u2)*b + (u3 - u2)*s1;
+}
 function chanVal(o, fs, c, j, t){
-  const K = o.keys, n = fs.length;
-  if(t <= fs[0]) return K[fs[0]][c][j];
-  if(t >= fs[n-1]) return K[fs[n-1]][c][j];
-  let i = 0; while(fs[i+1] <= t) i++;
-  const a = K[fs[i]][c][j], b = K[fs[i+1]][c][j];
-  if(o.interp === 'step') return a;
-  const u = (t - fs[i]) / (fs[i+1] - fs[i]);
-  if(o.interp === 'linear') return a + (b-a)*u;
-  return cr(K[fs[Math.max(0,i-1)]][c][j], a, b, K[fs[Math.min(n-1,i+2)]][c][j], u);
+  return hermite(i => o.keys[fs[i]][c][j], fs, t, i => tanMode(o, fs[i]));
 }
 function evalObj(o, t){
   const fs = keyFrames(o); if(!fs.length) return;
@@ -1199,14 +1226,14 @@ function evalObj(o, t){
   const p = v('p'), r = v('r'), s = v('s');
   o.mesh.position.set(p[0],p[1],p[2]); o.mesh.rotation.set(r[0],r[1],r[2]); o.mesh.scale.set(s[0],s[1],s[2]);
 }
-function applyFrame(){ objects.forEach(o => evalObj(o, frame)); evalStory(frame); refreshAttrs(true); }
+function applyFrame(){ objects.forEach(o => evalObj(o, frame)); evalStory(frame); refreshAttrs(true); if(ikMode) ikSync(); }
 function goFrame(f){
   frame = Math.round(Math.min(end, Math.max(start, f)));
   applyFrame(); syncTime(); drawTimeline();
 }
 function stepKey(dir){
   const pool = sel.length ? sel : objects;
-  const fs = [...new Set(pool.flatMap(keyFrames))].sort((a,b)=>a-b);
+  const fs = [...new Set(pool.flatMap(o => keyFrames(o).concat(o.poseLayer ? Object.keys(o.poseLayer.keys).map(Number) : [])))].sort((a,b)=>a-b);
   const f = dir > 0 ? fs.find(x=>x>frame) : fs.reverse().find(x=>x<frame);
   if(f === undefined) return toast(dir>0 ? 'No later key' : 'No earlier key');
   goFrame(f);
@@ -1369,6 +1396,7 @@ function fillTypeSections(o){
     $('#cToneW').hidden = !human; $('#cMuzW').hidden = human || !SPECIES[c.species].muzzle; $('#cMuz').value = c.muzzle || c.fur;
     $('#cHairW').hidden = $('#cHairCW').hidden = !human; $('#cHair').value = c.hair; $('#cHairC').value = c.hairColor;
     $('#cHatW').hidden = $('#cBindiW').hidden = !human;
+    { const L = o.poseLayer, n = L ? Object.keys(L.keys).length : 0; $('#cLayerW8').value = L ? (L.w ?? 1) : 1; $('#cLayerW8').disabled = !n; $('#cLayerHint').textContent = n ? `${n} pose key${n > 1 ? 's' : ''} on this character. Weight blends the layer in or out.` : 'Press I and drag hands, feet or the look target to refine any action; poses blend smoothly between keys.'; }
     $('#cModelBtn').textContent = c.model ? c.model.replace(/^char_\d+-\d+_/, '').slice(0, 26) : 'Use a model…'; $('#cModelClr').hidden = !c.model;
     $('#cModelHint').textContent = o.loadError || (c.model ? (o.rig && o.rig.model ? `Driven by MayaToon${o.rig.model.vrm ? ', with VRM expressions and lip-sync' : o.rig.model.faceMeshes.length ? ', with face shapes' : ''}.` : 'Loading model…') : 'Bring a VRM from VRoid Studio or any Mixamo-rigged GLB: it acts, walks, talks and emotes with everything here.'); $('#cHat').value = c.hat || 'none'; $('#cBindi').checked = !!c.bindi;
     $('#cTop').value = c.top; $('#cBot').value = c.bottom; $('#cStyle').value = c.style; $('#cShoes').value = c.shoes;
@@ -1410,6 +1438,8 @@ charField('#cBot','bottom'); charField('#cStyle','style'); charField('#cShoes','
 $('#cBindi').addEventListener('change', e => charEdit(c => { c.bindi = e.target.checked; }, true));
 $('#cModelBtn').addEventListener('click', () => { if(!server) return toast('Character models need the local studio server');
   pickFile('.vrm,.glb,model/gltf-binary', async f => { try{ toast('Uploading ' + f.name); const name = await uploadBlob(f, 'char', `char_${stamp()}_${f.name}`); charEdit(c => { c.model = name; }, true); }catch(e){ toast(e.message); } }); });
+$('#cLayerW8').addEventListener('input', e => { const o = primary(); if(o && o.poseLayer){ o.poseLayer.w = +e.target.value; applyFrame(); } });
+$('#cLayerW8').addEventListener('change', () => commit());
 $('#cModelClr').addEventListener('click', () => charEdit(c => { delete c.model; }, true));
 $('#cSize').addEventListener('input', e => { $('#oSize').textContent = (+e.target.value).toFixed(2); });
 charField('#cFurLen', 'furLen', true);
@@ -1559,6 +1589,7 @@ function drawGraph(){
   gctx.font = '11px Manrope, system-ui, sans-serif';
   const fs = o ? keyFrames(o) : [];
   document.querySelectorAll('[data-cmd="interp"]').forEach(b => b.classList.toggle('on', !!o && o.interp === b.dataset.arg));
+  const tk = o && gSelKey && o.keys[gSelKey.f] ? tanMode(o, gSelKey.f) : null; document.querySelectorAll('[data-cmd="ktan"]').forEach(b => b.classList.toggle('on', b.dataset.arg === tk));
   syncKeyFields(o);
   if(!o || !fs.length){
     gctx.fillStyle = css('--text-dim'); gctx.textAlign = 'center';
@@ -1595,6 +1626,13 @@ function drawGraph(){
     for(const f of fs){
       const x = M.x(f), y = M.y(disp(ch.c, o.keys[f][ch.c][ch.j]));
       const on = gSelKey && gSelKey.f === f && gSelKey.id === ch.id;
+      gctx.fillStyle = on ? css('--sel') : css('--graph-bg'); gctx.strokeStyle = on ? css('--sel') : ch.color; gctx.lineWidth = 1.5;
+      if(on){ const i = fs.indexOf(f), get = k => disp(ch.c, o.keys[fs[k]][ch.c][ch.j]), md = tanMode(o, f), ppf = M.x(f + 1) - M.x(f);
+        gctx.strokeStyle = css('--sel'); gctx.lineWidth = 1.2;
+        for(const [side, sg] of [['in', -1], ['out', 1]]){ if((side === 'in' && i === 0) || (side === 'out' && i === fs.length - 1)) continue;
+          const m = slopeAt(get, fs, i, md, side), dfr = 34/Math.max(ppf, .01), x2 = M.x(f + sg*dfr), y2 = M.y(get(i) + sg*m*dfr);
+          const L = Math.hypot(x2 - x, y2 - y) || 1, ex = x + (x2 - x)/L*34, ey = y + (y2 - y)/L*34;
+          gctx.beginPath(); gctx.moveTo(x, y); gctx.lineTo(ex, ey); gctx.stroke(); gctx.beginPath(); gctx.arc(ex, ey, 3, 0, Math.PI*2); gctx.fillStyle = css('--sel'); gctx.fill(); } }
       gctx.fillStyle = on ? css('--sel') : css('--graph-bg'); gctx.strokeStyle = on ? css('--sel') : ch.color; gctx.lineWidth = 1.5;
       gctx.beginPath(); gctx.rect(x - (on?4.5:3.5), y - (on?4.5:3.5), on?9:7, on?9:7); gctx.fill(); gctx.stroke();
     }
@@ -2468,7 +2506,7 @@ const ACTIONS = {
   anim:{label:'Play animation', dur:72, cat:'anim', model:true, fn:() => ({})}
 };
 const CAT_COLOR = {move:'#5b8def', gesture:'#e0a64a', talk:'#c46bd6', emotion:'#e3574d', still:'#7f8a96', anim:'#4fb39a', shot:'#6c7f93'};
-const SPEED = {walk:{v:1.0, stride:.62}, run:{v:2.5, stride:1.15}};
+const SPEED = {walk:{v:1.0, stride:.76}, run:{v:2.5, stride:1.15}};
 function talkMouth(t){ const gate = sin(t*1.9) > -.55 ? 1 : .1; return clamp((.15 + .85*abs(sin(t*12.5))*(.55 + .45*sin(t*3.7 + 1.3)))*gate); }
 
 /* ----- story state ----- */
@@ -2565,7 +2603,7 @@ function applyPose(o, P){
   if(r.hands) for(const k of ['L','R']){ const h = r.hands[k]; if(!h) continue; const cu = clamp(P['hand' + k] ?? .35), pt = clamp(P['point' + k] || 0);
     h.f.forEach((g, i) => { const cc = i === 0 ? lerp(cu, 0, pt) : lerp(cu, 1, pt); g.rotation.z = -h.sx*cc*1.55; });
     h.t.rotation.set(-.55 + cu*.2, 0, -h.sx*(.25 + cu*.75)); }
-  if(r.model) retargetChar(o, P, F);
+  r._F = F; if(r.model) retargetChar(o, P, F);
   fc.browL.position.y = fc.browR.position.y = fc.browY + F.up*.03;
 }
 let fluid = true;
@@ -2603,7 +2641,7 @@ function secondary(o, f, P, m){
   const ax = (b.x - 2*m.x + a.x)/(d*d)*fps*fps, az = (b.z - 2*m.z + a.z)/(d*d)*fps*fps;
   const fwdA = ax*sin(m.yaw) + az*cos(m.yaw), yawRate = angDiff(b.yaw, a.yaw)/(2*d)*fps;
   const add = (k, x=0, y=0, z=0) => { const v = P[k] || ZERO; P[k] = [v[0] + x, v[1] + y, v[2] + z]; };
-  const lag = storyState(o, f - 2.5).P;
+  const lag = storyState(o, f - 2.5).P; if(o.poseLayer) addLayer(lag, o, f - 2.5);
   for(const k of ['elL','elR','head']){ const v = P[k] || ZERO, l = lag[k] || ZERO, w = k === 'tail' ? .5 : k === 'head' ? .25 : .3; P[k] = [lerp(v[0], l[0], w), lerp(v[1], l[1], w), lerp(v[2], l[2], w)]; }
   add('spine', clamp(fwdA*.03, -.12, .12));
   add('chest', .018*sin(T*1.75 + o.id), 0, clamp(-yawRate*speed*.05, -.12, .12));
@@ -2617,6 +2655,107 @@ function secondary(o, f, P, m){
   const pex = (hash1(sac - 1 + o.id) - .5)*.12, pey = (hash1((sac - 1)*3.1 + o.id) - .5)*.18;
   P.eyeX = lerp(pex, ex, sw); P.eyeY = clamp(lerp(pey, ey, sw) + ly*.35, -.45, .45);
 }
+/* ----- pose layer (additive joint offsets keyed by IK handles) ----- */
+const LAYER_J = ['hips','spine','chest','neck','head','shL','elL','shR','elR','thL','knL','anL','thR','knR','anR'];
+function layerAt(o, f){
+  const L = o.poseLayer; if(!L || !L.keys) return null;
+  const fs = Object.keys(L.keys).map(Number).sort((a, b) => a - b); if(!fs.length) return null;
+  const out = {}, js = new Set(); fs.forEach(k => Object.keys(L.keys[k]).forEach(j => js.add(j)));
+  for(const j of js){ out[j] = [0, 1, 2].map(c => hermite(i => (L.keys[fs[i]][j] || ZERO)[c], fs, f, () => 'auto')); }
+  return out;
+}
+function addLayer(P, o, f){
+  const off = layerAt(o, f); if(!off) return;
+  const w = o.poseLayer.w ?? 1;
+  for(const j in off){ const b = P[j] || REST[j] || ZERO, d = off[j]; P[j] = [b[0] + w*d[0], b[1] + w*d[1], b[2] + w*d[2]]; }
+}
+function keyLayer(o, f, deltas){
+  const L = o.poseLayer ||= {w:1, keys:{}};
+  if(!L.keys[f]){ const cur = layerAt(o, f) || {}; L.keys[f] = {}; for(const j in cur) L.keys[f][j] = cur[j].slice(); }
+  const w = L.w || 1;
+  for(const j in deltas){ const v = L.keys[f][j] || [0, 0, 0]; L.keys[f][j] = [v[0] + deltas[j][0]/w, v[1] + deltas[j][1]/w, v[2] + deltas[j][2]/w]; }
+}
+/* ----- two-bone IK ----- */
+const _ik = {a:new THREE.Vector3(), b:new THREE.Vector3(), c:new THREE.Vector3(), d:new THREE.Vector3(), q:new THREE.Quaternion(), q2:new THREE.Quaternion()};
+function turnJoint(bone, from, to){
+  const dq = new THREE.Quaternion().setFromUnitVectors(from.clone().normalize(), to.clone().normalize());
+  const wq = bone.getWorldQuaternion(new THREE.Quaternion()), pq = bone.parent.getWorldQuaternion(new THREE.Quaternion());
+  bone.quaternion.copy(pq.invert().multiply(dq.multiply(wq))); bone.updateMatrixWorld(true);
+}
+function ikSolve(o, upper, lower, endFn, target, poleHint){
+  const J = o.rig.J; o.rig.root.updateMatrixWorld(true);
+  const S = J[upper].getWorldPosition(new THREE.Vector3()), E = J[lower].getWorldPosition(new THREE.Vector3()), W = endFn();
+  const a = S.distanceTo(E), b = E.distanceTo(W), toT = target.clone().sub(S);
+  const d = clamp(toT.length(), abs(a - b) + 1e-3, a + b - 1e-3), dir = toT.normalize();
+  const se = E.clone().sub(S); let pole = se.clone().sub(dir.clone().multiplyScalar(se.dot(dir)));
+  if(pole.lengthSq() < 1e-6) pole = (poleHint || new THREE.Vector3(0, 0, 1)).clone().sub(dir.clone().multiplyScalar((poleHint || new THREE.Vector3(0, 0, 1)).dot(dir))); pole.normalize();
+  const A = Math.acos(clamp((a*a + d*d - b*b)/(2*a*d), -1, 1));
+  const E2 = S.clone().add(dir.clone().multiplyScalar(Math.cos(A)*a)).add(pole.multiplyScalar(Math.sin(A)*a));
+  turnJoint(J[upper], se, E2.clone().sub(S));
+  const E3 = J[lower].getWorldPosition(new THREE.Vector3()), W3 = endFn();
+  turnJoint(J[lower], W3.clone().sub(E3), target.clone().sub(E3));
+}
+const handPoint = (o, s) => o.rig.J['el' + s].localToWorld(new THREE.Vector3(0, -.19, 0));
+const footPoint = (o, s) => o.rig.J['an' + s].getWorldPosition(new THREE.Vector3());
+function charForward(o){ return new THREE.Vector3(0, 0, 1).applyQuaternion(o.rig.mover.getWorldQuaternion(new THREE.Quaternion())); }
+/* ----- foot locking: planted feet stay put while the body moves ----- */
+let footLockOn = true;
+function footLock(o, f){
+  const R = o.rig; if(!R || !footLockOn) return false;
+  const t = f/fps, jump = o._ikT == null || t < o._ikT - .5/fps || t > o._ikT + 4/fps; o._ikT = t;
+  R.root.updateMatrixWorld(true);
+  const size = (o.char.size || 1)*o.mesh.scale.y, gy = o.mesh.getWorldPosition(new THREE.Vector3()).y;
+  let changed = false; o._lock ||= {};
+  for(const s of ['L', 'R']){
+    const st = o._lock[s] ||= {on:false, pos:new THREE.Vector3()}, p = footPoint(o, s), h = p.y - gy;
+    if(jump){ st.on = false; continue; }
+    if(h < .07*size){
+      if(!st.on || Math.hypot(st.pos.x - p.x, st.pos.z - p.z) > .2*size){ st.on = true; st.pos.copy(p); }
+      const tgt = new THREE.Vector3(st.pos.x, p.y, st.pos.z);
+      if(tgt.distanceToSquared(p) > 4e-6){ ikSolve(o, 'th' + s, 'kn' + s, () => footPoint(o, s), tgt, charForward(o)); changed = true; }
+    } else st.on = false;
+  }
+  return changed;
+}
+/* ----- IK handles in the viewport ----- */
+let ikMode = false, ikDragging = null;
+const ikGroup = new THREE.Group(); ikGroup.visible = false; scene.add(ikGroup);
+const IK_H = [['handL', 'L', 'hand', '#f2a33a'], ['handR', 'R', 'hand', '#f2a33a'], ['footL', 'L', 'foot', '#3fb8a9'], ['footR', 'R', 'foot', '#3fb8a9'], ['look', '', 'look', '#b08cf0']];
+const ikHandles = IK_H.map(([id, s, kind, col]) => { const m = new THREE.Mesh(new THREE.SphereGeometry(kind === 'look' ? .05 : .045, 18, 12), new THREE.MeshBasicMaterial({color:col, depthTest:false, transparent:true, opacity:.9}));
+  m.renderOrder = 999; m.userData = {id, s, kind}; ikGroup.add(m); return m; });
+const tcIK = new THREE.TransformControls(camera, renderer.domElement); tcIK.setSize(.7); tcIK.setMode('translate');
+scene.add(tcIK.getHelper ? tcIK.getHelper() : tcIK);
+tcIK.addEventListener('dragging-changed', e => { orbit.enabled = !e.value; gizmoUsed = true; if(e.value){ if(playing) togglePlay(); ikDragging = tcIK.object; } else { ikDragging = null; commit(); refreshAll(); } });
+tcIK.addEventListener('objectChange', () => { const h = tcIK.object; if(h) ikApply(h); });
+function ikTarget(){ const o = primary(); return o && o.type === 'character' && o.rig ? o : null; }
+function ikSync(){
+  const o = ikTarget(); ikGroup.visible = ikMode && !!o; if(!ikGroup.visible) return;
+  o.rig.root.updateMatrixWorld(true);
+  for(const h of ikHandles){ if(h === ikDragging) continue; const u = h.userData;
+    if(u.kind === 'hand') h.position.copy(handPoint(o, u.s)); else if(u.kind === 'foot') h.position.copy(footPoint(o, u.s));
+    else { const hp = o.rig.J.head.localToWorld(new THREE.Vector3(0, .27, 0)); h.position.copy(hp).addScaledVector(new THREE.Vector3(0, 0, 1).applyQuaternion(o.rig.J.head.getWorldQuaternion(new THREE.Quaternion())), .9*(o.char.size || 1)); } }
+}
+function ikApply(h){
+  const o = ikTarget(); if(!o) return;
+  const u = h.userData, J = o.rig.J, names = u.kind === 'hand' ? ['sh' + u.s, 'el' + u.s] : u.kind === 'foot' ? ['th' + u.s, 'kn' + u.s] : ['head'];
+  const before = {}; names.forEach(n => before[n] = [J[n].rotation.x, J[n].rotation.y, J[n].rotation.z]);
+  if(u.kind === 'hand') ikSolve(o, names[0], names[1], () => handPoint(o, u.s), h.position.clone(), charForward(o).negate());
+  else if(u.kind === 'foot') ikSolve(o, names[0], names[1], () => footPoint(o, u.s), h.position.clone(), charForward(o));
+  else { const hb = J.head, hp = hb.localToWorld(new THREE.Vector3(0, .27, 0)), pq = hb.parent.getWorldQuaternion(new THREE.Quaternion()).invert();
+    const v = h.position.clone().sub(hp).applyQuaternion(pq); hb.rotation.set(clamp(-Math.atan2(v.y, Math.hypot(v.x, v.z)), -.7, .7), clamp(Math.atan2(v.x, v.z), -1.2, 1.2), hb.rotation.z); hb.updateMatrixWorld(true); }
+  const deltas = {}; names.forEach(n => { const r = J[n].rotation; deltas[n] = [angDiff(r.x, before[n][0]), angDiff(r.y, before[n][1]), angDiff(r.z, before[n][2])]; });
+  keyLayer(o, frame, deltas); o._lock = {}; o._ikT = null;
+  applyFrame(); drawTimeline(); refreshAttrs(true);
+}
+function setIkMode(on){
+  const o = ikTarget();
+  if(on && !o) return toast('Select a character first, then turn on IK pose');
+  ikMode = on; document.getElementById('ikBtn') && document.getElementById('ikBtn').classList.toggle('on', on);
+  if(on){ tc.detach(); ikSync(); tcIK.attach(ikHandles[1]); toast('IK pose: drag the orange hands, teal feet or purple look target. Each drag keys the pose layer at this frame.'); }
+  else { tcIK.detach(); ikGroup.visible = false; }
+}
+function ikPick(){ if(!ikMode || !ikGroup.visible) return false; const hits = ray.intersectObjects(ikHandles, false); if(!hits.length) return false; tcIK.attach(hits[0].object); return true; }
+
 let physicsOn = true;
 const _sp = {q1:new THREE.Quaternion(), q2:new THREE.Quaternion(), v1:new THREE.Vector3(), v2:new THREE.Vector3(), v3:new THREE.Vector3(), v4:new THREE.Vector3(), c:new THREE.Vector3()};
 function springHead(jt){ jt.bone.updateWorldMatrix(true, false); return _sp.v1.setFromMatrixPosition(jt.bone.matrixWorld); }
@@ -2660,8 +2799,10 @@ function evalCharacter(o, f){
   o.rig.mover.position.set(m.x, 0, m.z); o.rig.mover.rotation.y = m.yaw;
   const s = storyState(o, f);
   s.P.face.blink = Math.max(s.P.face.blink || 0, blinkAt(o, f));
+  if(o.poseLayer) addLayer(s.P, o, f);
   if(fluid) secondary(o, f, s.P, m);
   applyPose(o, s.P);
+  if(footLock(o, f) && o.rig.model) retargetChar(o, s.P, o.rig._F);
   if(physicsOn) springUpdate(o, f);
   o._say = s.say;
 }
@@ -4343,10 +4484,18 @@ function run(cmd, arg){
     case 'voiceAll': voiceClips(story.clips.filter(staleVoice), 'Voicing line'); break;
     case 'smoothPlay': smoothPlay = !smoothPlay; $('#smoothBtn').classList.toggle('on', smoothPlay); toast(smoothPlay ? 'Smooth playback on' : 'Playback steps frame by frame'); break;
     case 'lookView': lookView = lookView === 'prod' ? 'fast' : 'prod'; $('#lookBtn').classList.toggle('on', lookView === 'prod'); toast(lookView === 'prod' ? 'Production viewport' : 'Fast viewport'); break;
+    case 'ikMode': setIkMode(!ikMode); break;
+    case 'footLock': footLockOn = !footLockOn; $('#footLockBtn').classList.toggle('on', footLockOn); objects.forEach(o => { o._ikT = null; o._lock = {}; }); applyFrame(); toast(footLockOn ? 'Foot locking on' : 'Foot locking off'); break;
+    case 'layerClearHere': { const o = ikTarget(); if(o && o.poseLayer && o.poseLayer.keys[frame]){ delete o.poseLayer.keys[frame]; applyFrame(); commit(); refreshAll(); toast('Pose key removed'); } else toast('No pose key at this frame'); break; }
+    case 'layerClear': { const o = ikTarget(); if(o && o.poseLayer){ o.poseLayer = null; applyFrame(); commit(); refreshAll(); toast('Pose layer cleared'); } break; }
     case 'physics': physicsOn = !physicsOn; $('#physicsBtn').classList.toggle('on', physicsOn); objects.forEach(o => { o._simT = null; }); applyFrame(); toast(physicsOn ? 'Hair and cloth physics on' : 'Physics off'); break;
     case 'fluid': fluid = !fluid; $('#fluidBtn').classList.toggle('on', fluid); applyFrame(); toast(fluid ? 'Natural motion on' : 'Natural motion off'); break;
     case 'gfit': gNeedsFit = true; drawGraph(); break;
     case 'interp': setInterp(arg); break;
+    case 'ktan': { const o = primary(); if(!o || !Object.keys(o.keys).length) return toast('Select an animated object first');
+      const fsel = gSelKey && o.keys[gSelKey.f] ? [gSelKey.f] : o.keys[frame] ? [frame] : keyFrames(o);
+      fsel.forEach(f => { if(arg === 'auto' && o.interp === 'spline') delete o.keys[f].t; else o.keys[f].t = arg; });
+      applyFrame(); commit(); drawGraph(); toast(`${fsel.length === 1 ? 'Key at ' + fsel[0] : 'All keys'}: ${arg} tangent`); break; }
     case 'render': renderDialog(); break;
     case 'theme': {
       const dark = getComputedStyle(document.documentElement).colorScheme.includes('dark');
@@ -4394,7 +4543,7 @@ window.addEventListener('keydown', e => {
   if(mod || e.altKey) return;
   if(k === 'p'){ e.preventDefault(); e.shiftKey ? unparentCmd() : parentCmd(); return; }
   const map = {q:['tool','select'], w:['tool','move'], e:['tool','rotate'], r:['tool','scale'], f:['frameSel'], a:['frameAll'],
-    s:['key'], x:['snap'], g:['graph'], '4':['wire'], '5':['shaded'], delete:['del'], backspace:['del'], ',':['prevFrame'], '.':['nextFrame'], '?':['shortcuts']};
+    s:['key'], x:['snap'], g:['graph'], i:['ikMode'], '4':['wire'], '5':['shaded'], delete:['del'], backspace:['del'], ',':['prevFrame'], '.':['nextFrame'], '?':['shortcuts']};
   if(k === ' '){ e.preventDefault(); togglePlay(); return; }
   if(k === 'escape'){ if(pickTarget){ finishPick(null); return; } setSelection([]); return; }
   if((k === 'delete' || k === 'backspace') && focusArea === 'story' && selClip != null){ e.preventDefault(); deleteClip(); return; }
@@ -4429,6 +4578,7 @@ function loop(){
     if(smoothPlay){ objects.forEach(o => evalObj(o, frame + acc*fps)); evalStory(frame + acc*fps); }
     else if(moved) evalAll(frame);
     if(moved){ refreshAttrs(true); syncTime(); drawTimeline(); }
+    if(ikMode) ikSync();
   } else acc = 0;
   if(tween){
     tween.t = Math.min(1, tween.t + dt/0.32);
@@ -4504,7 +4654,7 @@ setTool('move'); syncTime(); refreshAll(); resize();
 if(demoBoot){ camera.position.set(6.5, 4.8, 11); orbit.target.set(0, .8, 0); orbit.update(); setFilm(true); toggleBottom('story', true); }
 loop();
 window.__mayatoon = {get objects(){ return objects; }, get sel(){ return sel; }, get story(){ return story; }, run, select, setSelection, goFrame, serialize, finishPick, addAction, evalAll,
-  rebuild:o => { buildCharacter(o); applyFrame(); }, cam:(p, t) => { setFilm(false); camera.position.set(...p); orbit.target.set(...t); orbit.update(); }, pose:(o, P) => applyPose(o, P), evalChar:(o, f) => evalCharacter(o, f)};
+  rebuild:o => { buildCharacter(o); applyFrame(); }, cam:(p, t) => { setFilm(false); camera.position.set(...p); orbit.target.set(...t); orbit.update(); }, pose:(o, P) => applyPose(o, P), evalChar:(o, f) => evalCharacter(o, f), ik:{setIkMode, ikApply, handles:ikHandles, footPoint, keyLayer, layerAt}};
 })();
 </script>
 </body>

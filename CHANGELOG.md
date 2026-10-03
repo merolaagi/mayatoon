@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.12.0
+- IK pose tool (I, or the new tool button): drag a character's hands, feet or purple look target in the viewport; a two-bone IK solver bends the limb to reach and keys an additive pose layer on top of its actions. Poses blend smoothly between keys; a weight slider and Clear key / Clear all live in the Attribute Editor. Works with VRM and Mixamo models too
+- Foot locking with leg IK (Display menu, on by default): feet that touch the ground stay planted while the body moves; grounded foot drift on a test walk fell from about 61 cm to under 1 cm
+- Walk stride now matches the leg swing geometry, so walking looks planted even without locking
+- Curve editor tangents per key: Auto (smooth, never overshoots a key), Linear, Flat (ease in and out) and Step, with tangent handles drawn on the selected key; interpolation is Hermite throughout
+- Follow-through now includes the pose layer, so IK placements land exactly
+
 ## 0.11.0
 - Hair and cloth physics (Display, Hair and cloth physics, on by default): spring chains with head and body colliders for braids (4 segments), ponytails, long hair, animal tails and the sari pallu; braids drape over the back of the head instead of passing through it
 - Dupatta for kurta outfits on women and girls (or any character with dupatta set): two physics tails behind the shoulders and a drape across the front
