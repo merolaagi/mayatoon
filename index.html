@@ -420,6 +420,7 @@ dialog::backdrop{background:rgba(5,6,8,.55);backdrop-filter:blur(4px)}
       <button data-cmd="grid">Toggle grid</button>
       <button data-cmd="lookView" id="lookBtn" class="on">Production viewport (AO, bloom, grade)</button>
       <button data-cmd="smoothPlay" id="smoothBtn" class="on">Smooth playback (in-between frames)</button>
+      <button data-cmd="physics" id="physicsBtn" class="on">Hair and cloth physics</button>
       <button data-cmd="fluid" id="fluidBtn" class="on">Natural motion (follow-through, eye contact)</button>
       <hr>
       <button data-cmd="frameSel">Frame selected <kbd>F</kbd></button>
@@ -642,9 +643,10 @@ import {BokehPass} from 'three/addons/postprocessing/BokehPass.js';
 import {FullScreenQuad} from 'three/addons/postprocessing/Pass.js';
 import {FXAAShader} from 'three/addons/shaders/FXAAShader.js';
 import {CopyShader} from 'three/addons/shaders/CopyShader.js';
+import {VRMLoaderPlugin} from '@pixiv/three-vrm';
 // MayaToon keeps its colour maths explicit (as it was on r128); the renderer converts to sRGB on output
 T.ColorManagement.enabled = false;
-const THREE = Object.assign({}, T, {OrbitControls, TransformControls, GLTFLoader, GLTFExporter, OBJExporter, RoomEnvironment, EffectComposer, RenderPass, ShaderPass, OutputPass, GTAOPass, UnrealBloomPass, BokehPass, FullScreenQuad, FXAAShader, CopyShader});
+const THREE = Object.assign({}, T, {OrbitControls, TransformControls, GLTFLoader, GLTFExporter, OBJExporter, RoomEnvironment, EffectComposer, RenderPass, ShaderPass, OutputPass, GTAOPass, UnrealBloomPass, BokehPass, FullScreenQuad, FXAAShader, CopyShader, VRMLoaderPlugin});
 THREE.sRGBEncoding = 3001; THREE.LinearEncoding = 3000;
 Object.defineProperty(T.Texture.prototype, 'encoding', {configurable:true, get(){ return this.colorSpace === T.SRGBColorSpace ? 3001 : 3000; }, set(v){ this.colorSpace = v === 3001 ? T.SRGBColorSpace : T.NoColorSpace; }});
 THREE.WebGLMultisampleRenderTarget = class extends T.WebGLRenderTarget { constructor(w, h, o={}){ super(w, h, Object.assign({samples:4}, o)); } };
@@ -654,8 +656,8 @@ window.THREE = THREE;
 <script type="module">
 (function(){
 'use strict';
-const APP_VERSION = '0.10.0';
-const BUILD_ID = '20261002-230108-4786';
+const APP_VERSION = '0.11.0';
+const BUILD_ID = '20261003-041353-7092';
 const $ = s => document.querySelector(s);
 const DEG = Math.PI/180;
 
@@ -2090,7 +2092,7 @@ const _c2 = new THREE.Color();
 
 function buildCharacter(o){
   if(o.rig){ o.mesh.remove(o.rig.mover); disposeMesh(o.rig.mover); }
-  o._hands = null;
+  o._hands = null; o._springs = []; o._colliders = [];
   const c = o.char, sp = SPECIES[c.species] || SPECIES.human, human = c.species === 'human';
   const furLen = (sp.furLen || 0)*(c.furLen ?? 1);
   const limbHex = sp.limbs || c.fur;
@@ -2101,6 +2103,15 @@ function buildCharacter(o){
   const root = new THREE.Group(); root.scale.setScalar(c.size || 1); mover.add(root);
   const J = {}, face = {};
   const joint = (n, parent, x=0, y=0, z=0) => { const g = new THREE.Bone(); g.position.set(x, y, z); parent.add(g); J[n] = g; return g; };
+  const springs = o._springs = o._springs || [];
+  const chainBones = (parent, x, y, z, segs, segLen, set, geoFn) => {
+    const bones = []; const b0 = new THREE.Bone(); b0.position.set(x, y, z); parent.add(b0); bones.push(b0);
+    for(let i = 1; i <= segs; i++){ const b = new THREE.Bone(); b.position.set(0, -segLen, 0); bones[i - 1].add(b); bones.push(b); }
+    for(let i = 0; i < segs; i++) geoFn && geoFn(bones[i], i);
+    springs.push(Object.assign({joints:bones.slice(0, segs).map(b => ({bone:b, tailLocal:new THREE.Vector3(0, -segLen, 0)}))}, set));
+    return bones;
+  };
+  const sprJoint = (bone, tailLocal, set) => springs.push(Object.assign({joints:[{bone, tailLocal, poseDriven:true}]}, set));
   const part = (geo, mat, parent, x=0, y=0, z=0, sx=1, sy=1, sz=1) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = m.receiveShadow = true; parent.add(m); return m; };
   const sph = (r, ws=28, hs=18) => new THREE.SphereGeometry(r, ws, hs);
   const furry = (m, k=1, hex, opts) => { if(!human) addFur(m, furLen*k, hex || (m.material.vertexColors ? '#ffffff' : '#' + m.material.color.clone().convertLinearToSRGB().getHexString()), opts); return m; };
@@ -2311,13 +2322,14 @@ function buildCharacter(o){
     if(['short','ponytail','bun','spiky','braid'].includes(c.hair)) cap(.44, -.36);
     if(['short','bob','long','ponytail','braid','bun'].includes(c.hair)) fringe(c.hair === 'short' ? 6 : 7, (o.id % 2) ? 1 : -1);
     if(c.hair === 'bob'){ cap(.62, -.7); [1, -1].forEach(q => { const sv = part(tint(new THREE.SphereGeometry(.15, 24, 18)), hm, head, q*.24, hy - .06, -.04, .62, 1.05, .95); sv.rotation.z = q*.12; }); }
-    if(c.hair === 'long'){ cap(.52, -.6); const hj = joint('hair', head, 0, hy + .12, -.14); hairFur(part(strands(capsuleGeo(.21, .12, 30), 26, .008), hm, hj, 0, 0, -.02, 1.3, 1, .55)); }
-    if(c.hair === 'ponytail'){ part(tint(sph(.075)), hm, head, 0, hy + .2, -.3); const hj = joint('hair', head, 0, hy + .2, -.33); const pt = part(strands(capsuleGeo(.07, .16, 20), 12, .006), hm, hj); pt.rotation.x = .45; hairFur(pt, .8);
+    if(c.hair === 'long'){ cap(.52, -.6); const hj = joint('hair', head, 0, hy + .12, -.14); hairFur(part(strands(capsuleGeo(.21, .12, 30), 26, .008), hm, hj, 0, 0, -.02, 1.3, 1, .55)); sprJoint(hj, new THREE.Vector3(0, -.26, -.04), {stiff:1.6, drag:.45, grav:.45, hit:.05}); }
+    if(c.hair === 'ponytail'){ part(tint(sph(.075)), hm, head, 0, hy + .2, -.3); const hj = joint('hair', head, 0, hy + .2, -.33); const pt = part(strands(capsuleGeo(.07, .16, 20), 12, .006), hm, hj); pt.rotation.x = .45; hairFur(pt, .8); sprJoint(hj, new THREE.Vector3(0, -.19, -.09), {stiff:1.1, drag:.36, grav:.6, hit:.04});
       part(new THREE.TorusGeometry(.05, .012, 8, 20), STD('#d63b4a', .5), head, 0, hy + .21, -.33).rotation.x = .7; }
-    if(c.hair === 'braid'){ const hj = joint('hair', head, 0, hy - .06, -.29);
-      for(let i = 0; i < 8; i++){ const b = part(strands(new THREE.SphereGeometry(.05 - i*.003, 18, 12), 10, .004), hm, hj, (i % 2 ? .011 : -.011), -i*.068, -.02 - i*.004, 1.05, 1.3, .95); b.rotation.z = (i % 2 ? .35 : -.35); }
-      part(new THREE.TorusGeometry(.02, .007, 6, 14), STD('#d63b4a', .5), hj, 0, -.55, -.05).rotation.x = Math.PI/2;
-      part(new THREE.ConeGeometry(.028, .07, 10), hm, hj, 0, -.6, -.05).rotation.x = Math.PI; }
+    if(c.hair === 'braid'){
+      const bb = chainBones(head, 0, hy - .06, -.29, 4, .14, {stiff:.7, drag:.32, grav:.85, hit:.035}, (b, i) => {
+        for(let k = 0; k < 2; k++){ const j = i*2 + k; const m = part(strands(new THREE.SphereGeometry(.05 - j*.003, 18, 12), 10, .004), hm, b, (j % 2 ? .011 : -.011), -k*.07, -.01, 1.05, 1.3, .95); m.rotation.z = (j % 2 ? .35 : -.35); } });
+      part(new THREE.TorusGeometry(.02, .007, 6, 14), STD('#d63b4a', .5), bb[3], 0, -.1, -.01).rotation.x = Math.PI/2;
+      part(new THREE.ConeGeometry(.026, .07, 10), hm, bb[3], 0, -.15, -.01).rotation.x = Math.PI; }
     if(c.hair === 'bun'){ const bn = part(strands(sph(.11), 16, .006), hm, head, 0, hy + .3, -.1); hairFur(bn, .7); part(new THREE.TorusGeometry(.1, .012, 8, 26), STD('#c79b3b', .35, .4), head, 0, hy + .26, -.1).rotation.x = Math.PI/2 - .3; }
     if(c.hair === 'spiky') for(let i = 0; i < 9; i++){ const a = i/9*Math.PI*2; const k = part(tint(new THREE.ConeGeometry(.055, .17, 12)), hm, head, sin(a)*.15, hy + .27, cos(a)*.15 - .04); k.rotation.set(cos(a)*.65, 0, -sin(a)*.65); }
     if(c.hair === 'curly'){ cap(.47, -.4); for(let i = 0; i < 22; i++){ const a = i*2.39996, yy = .45 + .5*((i*37) % 22)/22; const d = new THREE.Vector3(sin(a)*Math.sqrt(1 - yy*yy), yy, cos(a)*Math.sqrt(1 - yy*yy) - .2).normalize();
@@ -2341,7 +2353,15 @@ function buildCharacter(o){
     }
   }
   if(human && c.bindi){ const bd = part(sph(.016, 12, 10), STD('#c0182c', .35), head); bd.position.copy(surf(new THREE.Vector3(0, .2, .98))); bd.castShadow = false; }
+  if(c.style === 'sari') chainBones(chest, .115, .05, -.15, 3, .1, {stiff:.55, drag:.42, grav:.9, hit:.025}, (b, i) => {
+    const m = part(centeredCapsule(.034, .1, 12), clothMat(c.bottom), b, 0, -.05, 0, 1.55 - i*.08, 1, .3); m.castShadow = false; });
+  if((c.style === 'kurta' && c.gender === 'f') || c.dupatta){ const dc = c.dupattaColor || shade(c.bottom, 1.08);
+    [1, -1].forEach(q => chainBones(chest, .13*q, .05, -.135, 3, .11, {stiff:.6, drag:.42, grav:.85, hit:.025}, (b, i) => {
+      const m = part(centeredCapsule(.03, .11, 12), clothMat(dc), b, 0, -.055, 0, 1.5, 1, .28); m.castShadow = false; }));
+    const fr = part(new THREE.TorusGeometry(.13, .022, 8, 30, Math.PI), clothMat(dc), chest, 0, .07, .03, 1.15, .9, .9); fr.rotation.set(-Math.PI/2 + .35, 0, Math.PI); fr.castShadow = false; }
+  o._colliders = [{bone:head, off:new THREE.Vector3(0, .27, 0), r:.315}, {bone:chest, off:new THREE.Vector3(0, -.02, 0), r:.19}, {bone:spine, off:new THREE.Vector3(0, .13, 0), r:.18}, {bone:hips, off:new THREE.Vector3(0, -.01, 0), r:.19}];
   const tail = joint('tail', hips, 0, .03, -.15);
+  if(sp.tail && sp.tail !== 'none') sprJoint(tail, new THREE.Vector3(0, .18, -.2), {stiff:3.2, drag:.38, grav:.05, hit:.02});
   const tailM = () => new THREE.MeshStandardMaterial({roughness:.85, vertexColors:true, envMapIntensity:.4, wireframe:wire});
   switch(sp.tail){
     case 'cat': case 'tiger': case 'lion': {
@@ -2365,7 +2385,7 @@ function buildCharacter(o){
     case 'puff': furry(part(sph(.06), STD('#ffffff', .9), tail, 0, 0, -.02), 1.6); break;
     case 'curl': { const t = part(new THREE.TorusGeometry(.04, .012, 8, 16, Math.PI*1.6), fur, tail, 0, .03, -.03); t.rotation.y = Math.PI/2; break; }
   }
-  o.rig = {mover, root, J, face, hands:o._hands || null}; delete o._hands;
+  o.rig = {mover, root, J, face, hands:o._hands || null, springs:o._springs, colliders:o._colliders}; delete o._hands; delete o._springs; delete o._colliders; o._simT = null;
   root.updateMatrixWorld(true);
   { const rq = root.getWorldQuaternion(new THREE.Quaternion()).invert(); o.rig.bindQ = {}; for(const n of ['hips','spine','chest','neck','head','anL','anR','elL','elR']) o.rig.bindQ[n] = rq.clone().multiply(J[n].getWorldQuaternion(new THREE.Quaternion())).invert(); }
   if(c.model && server){ root.traverse(n => { if(n.isMesh || n.isLine) n.visible = false; }); loadCharModel(o); }
@@ -2584,20 +2604,55 @@ function secondary(o, f, P, m){
   const fwdA = ax*sin(m.yaw) + az*cos(m.yaw), yawRate = angDiff(b.yaw, a.yaw)/(2*d)*fps;
   const add = (k, x=0, y=0, z=0) => { const v = P[k] || ZERO; P[k] = [v[0] + x, v[1] + y, v[2] + z]; };
   const lag = storyState(o, f - 2.5).P;
-  for(const k of ['elL','elR','head','tail']){ const v = P[k] || ZERO, l = lag[k] || ZERO, w = k === 'tail' ? .5 : k === 'head' ? .25 : .3; P[k] = [lerp(v[0], l[0], w), lerp(v[1], l[1], w), lerp(v[2], l[2], w)]; }
+  for(const k of ['elL','elR','head']){ const v = P[k] || ZERO, l = lag[k] || ZERO, w = k === 'tail' ? .5 : k === 'head' ? .25 : .3; P[k] = [lerp(v[0], l[0], w), lerp(v[1], l[1], w), lerp(v[2], l[2], w)]; }
   add('spine', clamp(fwdA*.03, -.12, .12));
   add('chest', .018*sin(T*1.75 + o.id), 0, clamp(-yawRate*speed*.05, -.12, .12));
   add('shL', 0, 0, .012*sin(T*1.75 + o.id)); add('shR', 0, 0, -.012*sin(T*1.75 + o.id));
   add('head', clamp(-fwdA*.02, -.08, .08), 0, clamp(yawRate*speed*.03, -.08, .08));
-  add('tail', clamp(-fwdA*.05, -.4, .4), clamp(-yawRate*.22, -.6, .6), 0);
   const hx = (P.head || ZERO)[0], hy = (P.head || ZERO)[1];
-  add('hair', clamp(speed*.22 + fwdA*.05 - hx*.55, -.35, .8), clamp(-yawRate*.15 - hy*.4, -.5, .5), .05*sin(T*2.3 + o.id));
   let ly = 0; for(const k of [0, 3, 6, 9]) ly += lookYaw(o, f - k); ly /= 4;
   if(abs(ly) > 1e-3){ add('head', 0, ly*.62, 0); add('chest', 0, ly*.24, 0); add('neck', 0, ly*.1, 0); }
   const sac = Math.floor((f + o.id*17)/38), sw = smooth(((f + o.id*17) % 38)/2.5);
   const ex = (hash1(sac + o.id) - .5)*.12, ey = (hash1(sac*3.1 + o.id) - .5)*.18;
   const pex = (hash1(sac - 1 + o.id) - .5)*.12, pey = (hash1((sac - 1)*3.1 + o.id) - .5)*.18;
   P.eyeX = lerp(pex, ex, sw); P.eyeY = clamp(lerp(pey, ey, sw) + ly*.35, -.45, .45);
+}
+let physicsOn = true;
+const _sp = {q1:new THREE.Quaternion(), q2:new THREE.Quaternion(), v1:new THREE.Vector3(), v2:new THREE.Vector3(), v3:new THREE.Vector3(), v4:new THREE.Vector3(), c:new THREE.Vector3()};
+function springHead(jt){ jt.bone.updateWorldMatrix(true, false); return _sp.v1.setFromMatrixPosition(jt.bone.matrixWorld); }
+function springRestDir(jt, out){ const pq = jt.bone.parent.getWorldQuaternion(_sp.q1); return out.copy(jt.tailLocal).normalize().applyQuaternion(jt.rest).applyQuaternion(pq); }
+function springReset(R){
+  if(R.springs) for(const ch of R.springs) for(const jt of ch.joints){ jt.bone.quaternion.copy(jt.rest); const h = springHead(jt), len = jt.tailLocal.length()*jt.bone.matrixWorld.getMaxScaleOnAxis();
+    const d = springRestDir(jt, _sp.v2); jt.tail = (jt.tail || new THREE.Vector3()).copy(h).addScaledVector(d, len); jt.prev = (jt.prev || new THREE.Vector3()).copy(jt.tail); jt.bone.updateMatrixWorld(true); }
+  const vrm = R.model && R.model.vrmObj; if(vrm && vrm.springBoneManager) vrm.springBoneManager.reset();
+}
+function springStep(R, dt){
+  if(R.springs) for(const ch of R.springs) for(const jt of ch.joints){
+    const b = jt.bone, head = springHead(jt).clone(), ws = b.matrixWorld.getMaxScaleOnAxis(), len = jt.tailLocal.length()*ws;
+    const pq = b.parent.getWorldQuaternion(_sp.q2).clone(), dir = springRestDir(jt, _sp.v2);
+    const next = _sp.v3.copy(jt.tail).addScaledVector(_sp.v4.copy(jt.tail).sub(jt.prev), 1 - ch.drag).addScaledVector(dir, ch.stiff*dt*ws); next.y -= ch.grav*dt*ws;
+    next.sub(head).normalize().multiplyScalar(len).add(head);
+    for(const cl of R.colliders || []){ const cen = cl.bone.localToWorld(_sp.c.copy(cl.off)), rr = cl.r*cl.bone.matrixWorld.getMaxScaleOnAxis() + ch.hit*ws, d = _sp.v4.copy(next).sub(cen), dl = d.length();
+      if(dl < rr && dl > 1e-6){ next.copy(cen).addScaledVector(d, rr/dl); next.sub(head).normalize().multiplyScalar(len).add(head); } }
+    jt.prev.copy(jt.tail); jt.tail.copy(next);
+    const local = _sp.v4.copy(next).sub(head).normalize().applyQuaternion(pq.multiply(jt.rest).invert());
+    b.quaternion.copy(jt.rest).multiply(_sp.q1.setFromUnitVectors(_sp.c.copy(jt.tailLocal).normalize(), local));
+    b.updateMatrixWorld(true); (jt.lastQ ||= new THREE.Quaternion()).copy(b.quaternion);
+  }
+  const vrm = R.model && R.model.vrmObj; if(vrm && vrm.springBoneManager) vrm.springBoneManager.update(dt);
+}
+function springUpdate(o, f){
+  const R = o.rig; if(!R) return;
+  const vrm = R.model && R.model.vrmObj;
+  if(!((R.springs && R.springs.length) || (vrm && vrm.springBoneManager))) return;
+  R.root.updateMatrixWorld(true);
+  if(R.springs) for(const ch of R.springs) for(const jt of ch.joints) jt.rest = jt.poseDriven ? (jt.rest || new THREE.Quaternion()).copy(jt.bone.quaternion) : (jt.rest || jt.bone.quaternion.clone());
+  const t = f/fps, last = o._simT;
+  if(last == null || t < last - .5/fps || t > last + 4/fps){ springReset(R); for(let i = 0; i < 24; i++) springStep(R, 1/60); o._simT = t; return; }
+  const dt = t - last;
+  if(dt <= 1e-6){ if(R.springs) for(const ch of R.springs) for(const jt of ch.joints) if(jt.lastQ){ jt.bone.quaternion.copy(jt.lastQ); jt.bone.updateMatrixWorld(true); } return; }
+  const n = Math.min(12, Math.ceil(dt*90)); for(let i = 0; i < n; i++) springStep(R, dt/n);
+  o._simT = t;
 }
 function evalCharacter(o, f){
   if(!o.rig) return;
@@ -2607,6 +2662,7 @@ function evalCharacter(o, f){
   s.P.face.blink = Math.max(s.P.face.blink || 0, blinkAt(o, f));
   if(fluid) secondary(o, f, s.P, m);
   applyPose(o, s.P);
+  if(physicsOn) springUpdate(o, f);
   o._say = s.say;
 }
 
@@ -2615,6 +2671,7 @@ THREE.Cache.enabled = true;
 const assetUrls = {};
 const assetURL = name => assetUrls[name] || (server ? 'media/assets/' + encodeURIComponent(name) : null);
 const gltfLoader = new THREE.GLTFLoader();
+gltfLoader.register(parser => new THREE.VRMLoaderPlugin(parser));
 function buildModel(o){
   const mover = new THREE.Group(); o.mesh.add(mover); o.rig = {mover};
   const ph = new THREE.Mesh(new THREE.BoxGeometry(.6, 1.6, .4).translate(0, .8, 0), new THREE.MeshBasicMaterial({color:0xf0b44c, wireframe:true}));
@@ -2654,9 +2711,10 @@ async function loadCharModel(o){
   try{ const buf = await fetchCharModel(name); g = await new Promise((ok, no) => gltfLoader.parse(buf.slice(0), '', ok, no)); }
   catch(e){ o.loadError = 'The character model could not be loaded: ' + (e.message || e); refreshAttrs(); return; }
   if(o.rig !== rig || o.char.model !== name || !objects.includes(o)) return;
-  const json = g.parser.json, ext = json.extensions || {}, vrm1 = ext.VRMC_vrm, vrm0 = ext.VRM;
+  const json = g.parser.json, ext = json.extensions || {}, vrm1 = ext.VRMC_vrm, vrm0 = ext.VRM, vrmObj = g.userData.vrm || null;
   const bones = {};
-  if(vrm1){ for(const [k, v] of Object.entries(vrm1.humanoid.humanBones)) bones[k] = await g.parser.getDependency('node', v.node); }
+  if(vrmObj){ for(const [k] of HUMANOID.concat([['leftFoot'],['rightFoot'],['leftHand'],['rightHand'],['leftEye'],['rightEye']])){ const n = vrmObj.humanoid.getRawBoneNode(k); if(n) bones[k] = n; } }
+  else if(vrm1){ for(const [k, v] of Object.entries(vrm1.humanoid.humanBones)) bones[k] = await g.parser.getDependency('node', v.node); }
   else if(vrm0){ for(const hb of vrm0.humanoid.humanBones) bones[hb.bone] = await g.parser.getDependency('node', hb.node); }
   else g.scene.traverse(n => { if(!n.isBone && !(n.type === 'Object3D' && n.children.length)) return; const nm = n.name.replace(/^mixamorig\d*[:_]?/i, '').replace(/^(def|bip\d*|j_bip_[clr])[_ ]?/i, '').replace(/[_ ]/g, '').toLowerCase();
     for(const [k, re] of Object.entries(NAME_HINTS)) if(!bones[k] && re.test(nm)) bones[k] = n; });
@@ -2687,7 +2745,8 @@ async function loadCharModel(o){
   // face: VRM expressions, else ARKit / VRoid morph names
   const expr = {};
   const addBind = (preset, mesh, index, w) => { const list = mesh.isMesh ? [mesh] : mesh.children.filter(x => x.isMesh); for(const m of list) if(m.morphTargetInfluences) (expr[preset] ||= []).push([m, index, w]); };
-  if(vrm1 && vrm1.expressions){ for(const [pk, ex] of Object.entries({...(vrm1.expressions.preset || {}), ...(vrm1.expressions.custom || {})})) for(const mb of ex.morphTargetBinds || []) addBind(pk, await g.parser.getDependency('node', mb.node), mb.index, mb.weight); }
+  if(vrmObj){ /* expressions run through the VRM expression manager */ }
+  else if(vrm1 && vrm1.expressions){ for(const [pk, ex] of Object.entries({...(vrm1.expressions.preset || {}), ...(vrm1.expressions.custom || {})})) for(const mb of ex.morphTargetBinds || []) addBind(pk, await g.parser.getDependency('node', mb.node), mb.index, mb.weight); }
   else if(vrm0 && vrm0.blendShapeMaster){ const v0 = {a:'aa', i:'ih', u:'ou', e:'ee', o:'oh', joy:'happy', angry:'angry', sorrow:'sad', fun:'relaxed', blink:'blink', surprised:'surprised'};
     for(const gp of vrm0.blendShapeMaster.blendShapeGroups) for(const bd of gp.binds || []){ const nodes = json.nodes.map((nd, i) => nd.mesh === bd.mesh ? i : -1).filter(i => i >= 0);
       for(const ni of nodes) addBind(v0[gp.presetName] || gp.presetName, await g.parser.getDependency('node', ni), bd.index, (bd.weight || 0)/100); } }
@@ -2698,10 +2757,11 @@ async function loadCharModel(o){
   // VRMC_node_constraint (aim, roll, rotation): helper bones that follow the main skeleton
   const cons = [], AX = {PositiveX:[1,0,0], NegativeX:[-1,0,0], PositiveY:[0,1,0], NegativeY:[0,-1,0], PositiveZ:[0,0,1], NegativeZ:[0,0,-1], X:[1,0,0], Y:[0,1,0], Z:[0,0,1]};
   const rqc = rig.root.getWorldQuaternion(new THREE.Quaternion()).invert(), rootQ = n => rqc.clone().multiply(n.getWorldQuaternion(new THREE.Quaternion()));
-  for(let i = 0; i < json.nodes.length; i++){ const nc = ((json.nodes[i].extensions || {}).VRMC_node_constraint || {}).constraint; if(!nc) continue;
+  for(let i = 0; i < (vrmObj ? 0 : json.nodes.length); i++){ const nc = ((json.nodes[i].extensions || {}).VRMC_node_constraint || {}).constraint; if(!nc) continue;
     const type = Object.keys(nc)[0], d = nc[type], dst = await g.parser.getDependency('node', i), src = await g.parser.getDependency('node', d.source);
     cons.push({type, dst, src, w:d.weight ?? 1, axis:new THREE.Vector3(...(AX[d.aimAxis || d.rollAxis] || [1,0,0])), dstRest:dst.quaternion.clone(), srcRest:src.quaternion.clone(), srcRestRoot:rootQ(src), dstRestRoot:rootQ(dst)}); }
-  rig.model = {holder, map, eyes, expr, faceMeshes, cons, vrm:!!(vrm0 || vrm1), name};
+  if(vrmObj && vrmObj.springBoneManager){ rig.root.updateMatrixWorld(true); vrmObj.springBoneManager.setInitState(); }
+  rig.model = {holder, map, eyes, expr, faceMeshes, cons, vrm:!!(vrm0 || vrm1), vrmObj, name}; o._simT = null;
   rig.root.traverse(n => { if((n.isMesh || n.isLine) && !holder.getObjectById(n.id)) n.visible = false; });
   o.loadError = null; applyFrame(); refreshAttrs();
 }
@@ -2728,7 +2788,17 @@ function retargetChar(o, P, F){
         const cur = k.axis.clone().applyQuaternion(base), want = p1.sub(p0).normalize(); target = I.clone().slerp(new THREE.Quaternion().setFromUnitVectors(cur, want), k.w).multiply(base); }
       k.dst.quaternion.copy(pq.invert().multiply(target)); k.dst.updateMatrixWorld(true); } }
   for(const ey of M.eyes) ey.b.quaternion.copy(ey.bindQ).multiply(_q1.setFromEuler(new THREE.Euler((P.eyeX || 0)*.7, (P.eyeY || 0)*.7, 0)));
-  if(M.faceMeshes.length){
+  if(M.vrmObj){
+    if(M.vrmObj.nodeConstraintManager) M.vrmObj.nodeConstraintManager.update();
+    const em = M.vrmObj.expressionManager;
+    if(em){ const op = clamp(F.open), rd = clamp(F.round), wd = clamp(F.wide);
+      const W = {blink:clamp(F.blink), happy:clamp((F.smile - .35)/.65)*.85, sad:clamp(F.brow)*.8, angry:clamp(-F.brow)*.8, surprised:clamp(F.up)*.7,
+        aa:clamp(op*(1 - rd)*(1 - wd*.5)*1.1), ou:clamp(rd*op*1.6), oh:clamp(rd*op*.8), ee:clamp(wd*op*1.1), ih:clamp(wd*op*.5)};
+      if(W.blink > .5) W.happy *= .4;
+      for(const [k, w] of Object.entries(W)) if(em.getExpression(k)) em.setValue(k, w);
+      em.update(); }
+  }
+  else if(M.faceMeshes.length){
     for(const m of M.faceMeshes) m.morphTargetInfluences.fill(0);
     const op = clamp(F.open), rd = clamp(F.round), wd = clamp(F.wide);
     const W = {blink:clamp(F.blink), happy:clamp((F.smile - .35)/.65)*.85, sad:clamp(F.brow)*.8, angry:clamp(-F.brow)*.8, surprised:clamp(F.up)*.7,
@@ -4273,6 +4343,7 @@ function run(cmd, arg){
     case 'voiceAll': voiceClips(story.clips.filter(staleVoice), 'Voicing line'); break;
     case 'smoothPlay': smoothPlay = !smoothPlay; $('#smoothBtn').classList.toggle('on', smoothPlay); toast(smoothPlay ? 'Smooth playback on' : 'Playback steps frame by frame'); break;
     case 'lookView': lookView = lookView === 'prod' ? 'fast' : 'prod'; $('#lookBtn').classList.toggle('on', lookView === 'prod'); toast(lookView === 'prod' ? 'Production viewport' : 'Fast viewport'); break;
+    case 'physics': physicsOn = !physicsOn; $('#physicsBtn').classList.toggle('on', physicsOn); objects.forEach(o => { o._simT = null; }); applyFrame(); toast(physicsOn ? 'Hair and cloth physics on' : 'Physics off'); break;
     case 'fluid': fluid = !fluid; $('#fluidBtn').classList.toggle('on', fluid); applyFrame(); toast(fluid ? 'Natural motion on' : 'Natural motion off'); break;
     case 'gfit': gNeedsFit = true; drawGraph(); break;
     case 'interp': setInterp(arg); break;
@@ -4433,7 +4504,7 @@ setTool('move'); syncTime(); refreshAll(); resize();
 if(demoBoot){ camera.position.set(6.5, 4.8, 11); orbit.target.set(0, .8, 0); orbit.update(); setFilm(true); toggleBottom('story', true); }
 loop();
 window.__mayatoon = {get objects(){ return objects; }, get sel(){ return sel; }, get story(){ return story; }, run, select, setSelection, goFrame, serialize, finishPick, addAction, evalAll,
-  rebuild:o => { buildCharacter(o); applyFrame(); }, cam:(p, t) => { setFilm(false); camera.position.set(...p); orbit.target.set(...t); orbit.update(); }, pose:(o, P) => applyPose(o, P)};
+  rebuild:o => { buildCharacter(o); applyFrame(); }, cam:(p, t) => { setFilm(false); camera.position.set(...p); orbit.target.set(...t); orbit.update(); }, pose:(o, P) => applyPose(o, P), evalChar:(o, f) => evalCharacter(o, f)};
 })();
 </script>
 </body>

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.11.0
+- Hair and cloth physics (Display, Hair and cloth physics, on by default): spring chains with head and body colliders for braids (4 segments), ponytails, long hair, animal tails and the sari pallu; braids drape over the back of the head instead of passing through it
+- Dupatta for kurta outfits on women and girls (or any character with dupatta set): two physics tails behind the shoulders and a drape across the front
+- VRM characters load through three-vrm: their authored spring bones (hair, skirts, accessories, with colliders), expression manager, node constraints and VRoid's MToon toon shading
+- Physics steps forward continuously during playback and renders (motion blur samples included), and settles to a natural drape instantly when you jump or scrub
+- The old procedural hair and tail sway is replaced by the simulation
+
 ## 0.10.0
 - Engine upgraded from three.js r128 (2021) to r186 (current), loaded as ES modules through an import map; three-vrm 3.5 is vendored for upcoming spring physics and toon shading
 - New ambient occlusion (GTAO, denoised) replaces SSAO; post chain is Render, GTAO, depth of field, bloom, Output (tone map and sRGB), grade, FXAA, the same for viewport, film view and MP4
